@@ -13,9 +13,10 @@ import java.util.Locale
 
 class GeminiRoleService {
 
-    // --- CONFIGURACIÓN DEL MODELO ---
-    private val MODEL_NAME = "gemini-2.5-flash"
-    private val FALLBACK_MODEL_NAME = "gemini-1.5-flash"
+    // --- CONFIGURACIÓN DE MODELOS OFICIALES ---
+    private val MODEL_NAME = "gemini-3.5-flash"
+    private val FALLBACK_MODEL_NAME = "gemini-2.5-flash"
+    private val LATEST_ALIAS_NAME = "gemini-flash-latest"
     
     private val apiKey: String = BuildConfig.GEMINI_API_KEY
         .replace("\"", "")
@@ -36,22 +37,17 @@ class GeminiRoleService {
     }
 
     private suspend fun generateContentWithFallback(prompt: String): String? {
-        val primaryModel = getModel(MODEL_NAME)
-        if (primaryModel != null) {
+        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME, LATEST_ALIAS_NAME)
+        for (candidate in candidates) {
+            val model = getModel(candidate) ?: continue
             try {
-                val res = primaryModel.generateContent(prompt).text?.trim()
-                if (!res.isNullOrEmpty()) return res
+                val res = model.generateContent(prompt).text?.trim()
+                if (!res.isNullOrEmpty()) {
+                    Log.d("GeminiRoleService", "Éxito con modelo '$candidate': $res")
+                    return res
+                }
             } catch (e: Exception) {
-                Log.w("GeminiRoleService", "Error con modelo $MODEL_NAME: ${e.message}. Probando $FALLBACK_MODEL_NAME...")
-            }
-        }
-        val fallbackModel = getModel(FALLBACK_MODEL_NAME)
-        if (fallbackModel != null) {
-            try {
-                val res = fallbackModel.generateContent(prompt).text?.trim()
-                if (!res.isNullOrEmpty()) return res
-            } catch (e: Exception) {
-                Log.e("GeminiRoleService", "Error con modelo fallback $FALLBACK_MODEL_NAME: ${e.message}", e)
+                Log.w("GeminiRoleService", "Fallo al consultar '$candidate': ${e.message}. Probando siguiente modelo...")
             }
         }
         return null
