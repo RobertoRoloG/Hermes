@@ -92,7 +92,9 @@ object NotificationScheduler {
         )
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTimeMs, pendingIntent)
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
             } else {
@@ -102,7 +104,7 @@ object NotificationScheduler {
             try {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent)
             } catch (e2: Exception) {
-                e2.printStackTrace()
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent)
             }
         }
     }
