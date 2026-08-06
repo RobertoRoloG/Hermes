@@ -25,13 +25,13 @@ class GeminiRoleService {
 
     private fun getModel(modelName: String = MODEL_NAME): GenerativeModel? {
         val finalKey = apiKey
-        return if (finalKey.isNotBlank() && finalKey.length > 10 && finalKey.startsWith("AIza")) {
+        return if (finalKey.isNotBlank() && finalKey.length > 10) {
             GenerativeModel(
                 modelName = modelName,
                 apiKey = finalKey
             )
         } else {
-            Log.w("GeminiRoleService", "API Key en local.properties no empieza por 'AIza' (clave actual: '${finalKey.take(6)}...'). Se usará la plantilla rica del rol local.")
+            Log.e("GeminiRoleService", "API Key no especificada en local.properties. Se usará la plantilla rica del rol local.")
             null
         }
     }
