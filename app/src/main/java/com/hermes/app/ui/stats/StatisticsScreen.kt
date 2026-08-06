@@ -161,15 +161,31 @@ fun StatisticsScreen(
                         }
                     }
 
-                    Button(
-                        onClick = {
-                            ExcelExporter.exportTasksToExcel(context, filteredTasks, selectedRange)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
-                        shape = RoundedCornerShape(10.dp),
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Exportar planning a Excel", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = {
+                                ExcelExporter.exportTasksToExcel(context, filteredTasks, selectedRange)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Exportar Excel", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                com.hermes.app.utils.PdfExporter.exportTasksToPdf(context, filteredTasks, selectedRange)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonMagenta),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Exportar PDF", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
                     }
                 }
             }

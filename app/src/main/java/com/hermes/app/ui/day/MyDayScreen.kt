@@ -1,5 +1,6 @@
 package com.hermes.app.ui.day
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,12 +102,13 @@ fun MyDayScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Fecha seleccionada
-            val selectedDateStr = remember(selectedCalendar.timeInMillis) { 
-                SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", Locale("es", "ES")).format(selectedCalendar.time)
+            // Fecha del día actual real
+            val actualTodayStr = remember { 
+                val formatted = SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", Locale("es", "ES")).format(Date())
+                "Hoy: ${formatted.replaceFirstChar { it.uppercase() }}"
             }
             Text(
-                text = selectedDateStr.replaceFirstChar { it.uppercase() },
+                text = actualTodayStr,
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -234,11 +236,21 @@ fun MyDayScreen(
         }
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     if (showCreateModal) {
         CreateTaskDialog(
             initialDate = selectedCalendar,
             onDismiss = { showCreateModal = false },
             onSave = { rawTask, days, weeks ->
+                if (rawTask.isFixed && rawTask.scheduledStart != null) {
+                    val conflict = viewModel.findOverlappingTask(rawTask.scheduledStart, rawTask.durationMinutes, rawTask.scheduledEnd)
+                    if (conflict != null) {
+                        val timeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(conflict.scheduledStart!!))
+                        Toast.makeText(context, "⚠️ Conflicto de horario: Se solapa con '${conflict.title}' ($timeStr)", Toast.LENGTH_LONG).show()
+                        return@CreateTaskDialog
+                    }
+                }
                 if (days.isNotEmpty()) {
                     val cal = rawTask.scheduledStart?.let { Calendar.getInstance().apply { timeInMillis = it } } ?: selectedCalendar
                     viewModel.addTasksForDaysOfWeek(
@@ -258,7 +270,18 @@ fun MyDayScreen(
     }
 
     editingTask?.let { task ->
-        EditTaskDialog(task = task, onDismiss = { editingTask = null }, onSave = { viewModel.updateTask(it); editingTask = null })
+        EditTaskDialog(task = task, onDismiss = { editingTask = null }, onSave = { updated ->
+            if (updated.isFixed && updated.scheduledStart != null) {
+                val conflict = viewModel.findOverlappingTask(updated.scheduledStart, updated.durationMinutes, updated.scheduledEnd, ignoreTaskId = updated.id)
+                if (conflict != null) {
+                    val timeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(conflict.scheduledStart!!))
+                    Toast.makeText(context, "⚠️ Conflicto de horario: Se solapa con '${conflict.title}' ($timeStr)", Toast.LENGTH_LONG).show()
+                    return@EditTaskDialog
+                }
+            }
+            viewModel.updateTask(updated)
+            editingTask = null
+        })
     }
 
     taskToDelete?.let { task ->

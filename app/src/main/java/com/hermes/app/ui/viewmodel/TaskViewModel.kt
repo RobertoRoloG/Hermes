@@ -51,6 +51,21 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCalendar.value = calendar
     }
 
+    fun findOverlappingTask(newTaskStart: Long?, durationMinutes: Int, newTaskEnd: Long? = null, ignoreTaskId: Long = 0L): TaskEntity? {
+        if (newTaskStart == null) return null
+        val calculatedEnd = newTaskEnd ?: (newTaskStart + durationMinutes * 60 * 1000L)
+        
+        return allTasks.value.find { existing ->
+            if (existing.id == ignoreTaskId || existing.isCompleted || existing.scheduledStart == null) {
+                false
+            } else {
+                val existStart = existing.scheduledStart
+                val existEnd = existing.scheduledEnd ?: (existStart + existing.durationMinutes * 60 * 1000L)
+                newTaskStart < existEnd && calculatedEnd > existStart
+            }
+        }
+    }
+
     fun addTask(task: TaskEntity) {
         val contextualized = roleManager.applyRoleContextToTask(task)
         viewModelScope.launch(Dispatchers.IO) {
