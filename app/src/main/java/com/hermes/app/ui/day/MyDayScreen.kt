@@ -348,9 +348,12 @@ fun CreateTaskDialog(
     var description by remember { mutableStateOf("") }
     var duration by remember { mutableIntStateOf(30) }
     var priority by remember { mutableIntStateOf(1) }
-    
     // Sección ¿Cuándo?
     var letHermesChooseDate by remember { mutableStateOf(false) }
+    var reminderLeadMinutes by remember { mutableIntStateOf(15) }
+    var availableFromDate by remember { mutableStateOf(initialDate) }
+    var showAvailableFromDatePicker by remember { mutableStateOf(false) }
+
     var taskDate by remember { mutableStateOf(initialDate) }
     var deadlineDate by remember { mutableStateOf<Calendar?>(null) }
     var isFixed by remember { mutableStateOf(false) }
@@ -560,8 +563,19 @@ fun CreateTaskDialog(
                                 if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
                             }
                         } else {
-                            // Hermes elige: opcionalmente pedir Deadline
-                            Column {
+                            // Hermes elige: fecha disponible desde y hasta (deadline)
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Disponible a partir del día", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                OutlinedButton(
+                                    onClick = { showAvailableFromDatePicker = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
+                                ) {
+                                    Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(availableFromDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
+                                }
+
                                 Text("Fecha límite (opcional)", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                                 OutlinedButton(
                                     onClick = { showDeadlinePicker = true },
@@ -570,6 +584,33 @@ fun CreateTaskDialog(
                                 ) {
                                     val dStr = deadlineDate?.let { SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(it.time) } ?: "Sin límite (máx 14 días)"
                                     Text(dStr, color = if(deadlineDate != null) TextPrimary else TextSecondary)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SectionLabel("NOTIFICACIÓN Y AVISO")
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf(
+                                0 to "Sin aviso", 5 to "5m", 15 to "15m", 30 to "30m",
+                                60 to "1h", 120 to "2h", 1440 to "1 día"
+                            )) { (mins, label) ->
+                                val selected = reminderLeadMinutes == mins
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = if (selected) NeonCyan else SurfaceVariantDark,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable { reminderLeadMinutes = mins }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (selected) Color.Black else TextPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
@@ -641,8 +682,10 @@ fun CreateTaskDialog(
                         finalStart = cal.timeInMillis // Se marcará como flexible el motor buscará este día
                         finalEnd = null
                     } else {
-                        // Hermes elige el día
-                        finalStart = null
+                        // Hermes elige el día a partir de la fecha disponible seleccionada
+                        val cal = availableFromDate.clone() as Calendar
+                        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+                        finalStart = cal.timeInMillis
                         finalEnd = null
                     }
 
@@ -651,6 +694,7 @@ fun CreateTaskDialog(
                             title = title,
                             description = description.ifBlank { null },
                             durationMinutes = duration,
+                            reminderLeadMinutes = reminderLeadMinutes,
                             priority = priority,
                             isFixed = isFixed && !letHermesChooseDate,
                             scheduledStart = finalStart,
@@ -673,6 +717,12 @@ fun CreateTaskDialog(
         val dpState = rememberDatePickerState(initialSelectedDateMillis = taskDate.timeInMillis)
         DatePickerDialog(onDismissRequest = { showDatePickerInDialog = false }, confirmButton = {
             TextButton(onClick = { dpState.selectedDateMillis?.let { taskDate = Calendar.getInstance().apply { timeInMillis = it } }; showDatePickerInDialog = false }) { Text("OK") }
+        }) { DatePicker(dpState) }
+    }
+    if (showAvailableFromDatePicker) {
+        val dpState = rememberDatePickerState(initialSelectedDateMillis = availableFromDate.timeInMillis)
+        DatePickerDialog(onDismissRequest = { showAvailableFromDatePicker = false }, confirmButton = {
+            TextButton(onClick = { dpState.selectedDateMillis?.let { availableFromDate = Calendar.getInstance().apply { timeInMillis = it } }; showAvailableFromDatePicker = false }) { Text("OK") }
         }) { DatePicker(dpState) }
     }
     if (showDeadlinePicker) {

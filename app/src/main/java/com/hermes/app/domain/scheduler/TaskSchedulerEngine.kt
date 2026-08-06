@@ -34,7 +34,8 @@ class TaskSchedulerEngine(
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        val startOfDay = if (isToday) maxOf(startOfDayRaw, now) else startOfDayRaw
+        val minMarginNow = now + 35 * 60 * 1000L // Margen de 35 min por delante de la hora actual
+        val startOfDay = if (isToday) maxOf(startOfDayRaw, minMarginNow) else startOfDayRaw
 
         val endOfDay = (dayCalendar.clone() as Calendar).apply {
             set(Calendar.HOUR_OF_DAY, workDayEndHour)
@@ -92,17 +93,18 @@ class TaskSchedulerEngine(
 
         val taskDurationMs = task.durationMinutes * 60 * 1000L
         
-        // Si la tarea tiene un inicio pre-marcado (p.ej. por repetición en un día), usamos ese día como inicio
-        // Si es totalmente libre (null), usamos la fecha de búsqueda global (hoy)
+        // Si la tarea tiene un día de inicio pre-marcado ("Disponible desde"), usamos ese día.
+        // Si no, usamos la fecha de búsqueda global.
         val searchCalendar = (task.scheduledStart?.let { 
             Calendar.getInstance().apply { timeInMillis = it }
         } ?: startSearchDate).clone() as Calendar
 
-        // Si viene con fecha pre-marcada, solemos buscar solo en ese día. 
-        // Si es null, buscamos en toda la ventana de días.
-        val limitDays = if (task.scheduledStart != null && !task.isAutoScheduled) 1 else maxSearchDays
+        for (dayIndex in 0 until maxSearchDays) {
+            // Si supera la fecha límite (deadline), abortar la búsqueda
+            if (task.deadline != null && searchCalendar.timeInMillis > task.deadline) {
+                break
+            }
 
-        repeat(limitDays) {
             val currentDayGaps = calculateAvailableGaps(searchCalendar, existingFixedTasks)
             
             // Lógica Best-Fit: Encontrar el hueco que mejor se ajuste (menor desperdicio)

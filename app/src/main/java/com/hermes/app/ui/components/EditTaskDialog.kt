@@ -35,6 +35,7 @@ fun EditTaskDialog(
     var description by remember { mutableStateOf(task.description ?: "") }
     var priority by remember { mutableIntStateOf(task.priority) }
     var duration by remember { mutableIntStateOf(task.durationMinutes) }
+    var reminderLeadMinutes by remember { mutableIntStateOf(task.reminderLeadMinutes) }
     
     var isFixed by remember { mutableStateOf(task.isFixed) }
     var hasEndTime by remember { mutableStateOf(task.scheduledEnd != null) }
@@ -210,6 +211,36 @@ fun EditTaskDialog(
                 }
 
                 item {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Notificación con antelación", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf(
+                                0 to "Sin aviso", 5 to "5m", 15 to "15m", 30 to "30m",
+                                60 to "1h", 120 to "2h", 1440 to "1 día"
+                            )) { (mins, label) ->
+                                val selected = reminderLeadMinutes == mins
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = if (selected) NeonCyan else SurfaceVariantDark,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable { reminderLeadMinutes = mins }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (selected) Color.Black else TextPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         (1..3).forEach { p ->
                             FilterChip(selected = priority == p, onClick = { priority = p }, label = { Text("P$p") })
@@ -242,10 +273,11 @@ fun EditTaskDialog(
                 onSave(task.copy(
                     title = title,
                     description = description.ifBlank { null },
-                    priority = priority,
                     durationMinutes = duration,
+                    reminderLeadMinutes = reminderLeadMinutes,
+                    priority = priority,
                     isFixed = isFixed,
-                    scheduledStart = if (isFixed) cal.timeInMillis else null,
+                    scheduledStart = if (isFixed) cal.timeInMillis else task.scheduledStart,
                     scheduledEnd = finalEnd
                 ))
             }) { Text("Guardar") }
