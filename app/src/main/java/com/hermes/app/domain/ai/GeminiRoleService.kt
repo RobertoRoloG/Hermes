@@ -14,9 +14,9 @@ import java.util.Locale
 class GeminiRoleService {
 
     // --- CONFIGURACIÓN DE MODELOS (Actualizado para Google AI SDK v1beta) ---
-    private val MODEL_NAME = "gemini-2.0-flash-lite"
-    private val FALLBACK_MODEL_NAME = "gemini-2.0-flash"
-    private val LATEST_ALIAS_NAME = "gemini-1.5-flash"
+    private val MODEL_NAME = "gemini-3.6-flash"
+    private val FALLBACK_MODEL_NAME = "gemini-3.5-flash"
+    private val LATEST_ALIAS_NAME = "gemini-flash-latest"
     
     private val apiKey: String = BuildConfig.GEMINI_API_KEY
         .replace("\"", "")
