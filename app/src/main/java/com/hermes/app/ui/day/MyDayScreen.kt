@@ -762,32 +762,9 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                             } else {
                                 null
                             }
-                        } else if (!letHermesChooseDate) {
-                            val cal = taskDate.clone() as Calendar
-                            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
-                            finalStart = cal.timeInMillis
-                            finalEnd = null
                         } else {
-                            val cal = availableFromDate.clone() as Calendar
-                            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
-                            finalStart = cal.timeInMillis
+                            finalStart = null
                             finalEnd = null
-                        }
-
-                        if (finalStart != null && reminderLeadMinutes > 0) {
-                            val leadMs = reminderLeadMinutes * 60 * 1000L
-                            val triggerMs = finalStart - leadMs
-                            val now = System.currentTimeMillis()
-                            if (triggerMs < now) {
-                                val minsUntilStart = ((finalStart - now) / (60 * 1000L)).coerceAtLeast(0).toInt()
-                                val errorMsg = if (minsUntilStart <= 0) {
-                                    "⚠️ La antelación de $reminderLeadMinutes min ya ha pasado. Usa 'En el momento (0m)'."
-                                } else {
-                                    "⚠️ La antelación de $reminderLeadMinutes min queda en el pasado (la tarea empieza en $minsUntilStart min)."
-                                }
-                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
-                                return@Button
-                            }
                         }
 
                         onSave(
