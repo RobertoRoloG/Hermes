@@ -71,7 +71,7 @@ fun MyDayScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable { showDatePicker = true }
                     ) {
-                        Text("Mi Día", fontWeight = FontWeight.Bold)
+                        Text(dateDisplay, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.CalendarMonth, contentDescription = "Elegir Fecha", tint = NeonCyan, modifier = Modifier.size(20.dp))
                     }
@@ -101,12 +101,12 @@ fun MyDayScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Fecha de hoy en pequeño
-            val todayDateStr = remember { 
-                SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", Locale("es", "ES")).format(Date())
+            // Fecha seleccionada
+            val selectedDateStr = remember(selectedCalendar.timeInMillis) { 
+                SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", Locale("es", "ES")).format(selectedCalendar.time)
             }
             Text(
-                text = todayDateStr.replaceFirstChar { it.uppercase() },
+                text = selectedDateStr.replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -149,12 +149,12 @@ fun MyDayScreen(
 
             // 3. Lista de Tareas (Timeline Style)
             val scheduledTasks = remember(dayTasks) {
-                dayTasks.filter { it.scheduledStart != null && (it.isFixed || it.scheduledEnd != null) }
+                dayTasks.filter { it.scheduledStart != null }
                     .sortedBy { it.scheduledStart }
             }
             
             val unscheduledTasks = remember(dayTasks) {
-                dayTasks.filter { it.scheduledStart == null || (!it.isFixed && it.scheduledEnd == null) }
+                dayTasks.filter { it.scheduledStart == null }
             }
 
             LazyColumn(
@@ -275,14 +275,35 @@ fun MyDayScreen(
             dismissButton = { TextButton(onClick = { taskToDelete = null }) { Text("Cancelar") } }
         )
     }
+
+    if (showDatePicker) {
+        val dpState = rememberDatePickerState(initialSelectedDateMillis = selectedCalendar.timeInMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    dpState.selectedDateMillis?.let {
+                        val cal = Calendar.getInstance().apply { timeInMillis = it }
+                        viewModel.setSelectedDate(cal)
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(dpState)
+        }
+    }
 }
 
 @Composable
 fun DateCarousel(selectedCalendar: Calendar, onDateSelected: (Calendar) -> Unit) {
     val today = remember { Calendar.getInstance() }
-    val dateList = remember(selectedCalendar.timeInMillis) {
-        (-7..7).map { offset ->
-            (selectedCalendar.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
+    val dateList = remember {
+        (-7..30).map { offset ->
+            (Calendar.getInstance()).apply { add(Calendar.DAY_OF_YEAR, offset) }
         }
     }
 
@@ -295,16 +316,27 @@ fun DateCarousel(selectedCalendar: Calendar, onDateSelected: (Calendar) -> Unit)
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = if (isSelected) NeonCyan else SurfaceDark),
-                modifier = Modifier.width(60.dp).clickable { onDateSelected(dayCal) }.border(1.dp, if (isSelected) NeonCyan else SurfaceVariantDark, RoundedCornerShape(10.dp)),
+                modifier = Modifier
+                    .width(60.dp)
+                    .clickable { onDateSelected(dayCal) }
+                    .border(1.dp, if (isSelected) NeonCyan else SurfaceVariantDark, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(text = if (isToday) "HOY" else dayName, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else TextSecondary)
                     Text(text = dayNum, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color.Black else TextPrimary)
                 }
             }
         }
     }
+}
+
+private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+           cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
 }
 
 @Composable
@@ -332,11 +364,6 @@ fun EmptyDayPlaceholder() {
         Text("No hay tareas para hoy", color = TextSecondary, fontWeight = FontWeight.Bold)
     }
 }
-
-private fun isSameDay(c1: Calendar, c2: Calendar): Boolean {
-    return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateTaskDialog(
