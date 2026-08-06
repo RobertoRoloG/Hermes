@@ -147,9 +147,27 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     roleManager.getActiveRole()
                 }
 
-                // Usar mensaje pre-generado o plantilla rápida para disparo instantáneo (0ms lag)
+                // Usar el mensaje pre-generado por la IA o generarlo ahora mismo
                 var message = task?.preGeneratedMessage
-                    ?: "Es hora de tu tarea: $taskTitle (${task?.durationMinutes ?: duration} min). ¡A por ello!"
+
+                if (message == null) {
+                    try {
+                        val geminiService = GeminiRoleService()
+                        message = geminiService.generateAdvanceNotification(
+                            role = activeRole,
+                            taskTitle = taskTitle,
+                            scheduledStartMs = scheduledStart,
+                            leadMinutes = leadMinutes,
+                            durationMinutes = duration,
+                        )
+                        if (taskId != -1L) {
+                            db.taskDao().updatePreGeneratedMessage(taskId, message)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        message = "${activeRole.displayName}: Recuerda '$taskTitle' (${duration} min)."
+                    }
+                }
 
                 val titleText = if (leadMinutes > 0) "$taskTitle (en $leadMinutes min)" else "$taskTitle (Empieza ahora)"
 
@@ -179,44 +197,19 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
-                fun buildAndPostNotification(textMsg: String) {
-                    val builder = NotificationCompat.Builder(context, NotificationScheduler.CHANNEL_ID)
-                        .setSmallIcon(com.hermes.app.R.mipmap.ic_launcher)
-                        .setContentTitle(titleText)
-                        .setContentText(textMsg)
-                        .setStyle(NotificationCompat.BigTextStyle().bigText(textMsg))
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setDefaults(NotificationCompat.DEFAULT_ALL)
-                        .setAutoCancel(true)
-                        .addAction(0, "✓ Completar", completePendingIntent)
-                        .addAction(0, "⏱ Postergar 15m", snoozePendingIntent)
+                val builder = NotificationCompat.Builder(context, NotificationScheduler.CHANNEL_ID)
+                    .setSmallIcon(com.hermes.app.R.mipmap.ic_launcher)
+                    .setContentTitle(titleText)
+                    .setContentText(message)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                    .setAutoCancel(true)
+                    .addAction(0, "✓ Completar", completePendingIntent)
+                    .addAction(0, "⏱ Postergar 15m", snoozePendingIntent)
 
-                    val manager = NotificationManagerCompat.from(context)
-                    manager.notify(taskId.toInt(), builder.build())
-                }
-
-                // Disparar inmediatamente (0ms de retraso)
-                buildAndPostNotification(message)
-
-                // Si no había mensaje pre-generado de la IA, generarlo en segundo plano y actualizar sutilmente la notificación
-                if (task?.preGeneratedMessage == null) {
-                    try {
-                        val geminiService = GeminiRoleService()
-                        val aiMessage = geminiService.generateAdvanceNotification(
-                            role = activeRole,
-                            taskTitle = taskTitle,
-                            scheduledStartMs = scheduledStart,
-                            leadMinutes = leadMinutes,
-                            durationMinutes = duration,
-                        )
-                        buildAndPostNotification(aiMessage)
-                        if (taskId != -1L) {
-                            db.taskDao().updatePreGeneratedMessage(taskId, aiMessage)
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                val manager = NotificationManagerCompat.from(context)
+                manager.notify(taskId.toInt(), builder.build())
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

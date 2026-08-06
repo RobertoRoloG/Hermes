@@ -51,6 +51,17 @@ object NotificationScheduler {
         val prepTriggerTimeMs = triggerTimeMs - (2 * 60 * 1000L)
         if (prepTriggerTimeMs > now) {
             scheduleAlarm(context, task, prepTriggerTimeMs, isPrepareOnly = true)
+        } else {
+            // Disparar pre-generación de IA INMEDIATAMENTE al guardar la tarea
+            val prepIntent = Intent(context, TaskNotificationReceiver::class.java).apply {
+                action = TaskNotificationReceiver.ACTION_PREPARE_NOTIFICATION
+                putExtra("task_id", task.id)
+                putExtra("task_title", task.title)
+                putExtra("scheduled_start", task.scheduledStart)
+                putExtra("reminder_lead_minutes", task.reminderLeadMinutes)
+                putExtra("task_duration", task.durationMinutes)
+            }
+            context.sendBroadcast(prepIntent)
         }
 
         // Programar notificación real
