@@ -52,6 +52,7 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                                 roleManager.getActiveRole()
                             }
 
+                            // Si la IA falla, devuelve null y NO actualizamos la DB (para que el disparo real sepa que no hay IA)
                             val message = geminiService.generateAdvanceNotification(
                                 role = activeRole,
                                 taskTitle = task.title,
@@ -59,7 +60,10 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                                 leadMinutes = task.reminderLeadMinutes,
                                 durationMinutes = task.durationMinutes,
                             )
-                            db.taskDao().updatePreGeneratedMessage(taskId, message)
+                            if (message != null) {
+                                db.taskDao().updatePreGeneratedMessage(taskId, message)
+                                android.util.Log.d("HermesNotify", "IA pre-generada y guardada para Tarea $taskId")
+                            }
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -147,30 +151,44 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     roleManager.getActiveRole()
                 }
 
-                // Usar el mensaje pre-generado por la IA o generarlo ahora mismo
+                val leadTextFallback = if (leadMinutes > 0) "en $leadMinutes min" else "ahora"
+                val localFallback = when {
+                    activeRole.id == "STRICT_COACH" || activeRole.displayName.contains("Entrenador", ignoreCase = true) -> 
+                        "🏋️‍♂️ [Entrenador] Faltan $leadMinutes min para '$taskTitle'. ¡Prepárate ya!"
+                    activeRole.id == "FORMAL_SECRETARY" || activeRole.displayName.contains("Secretario", ignoreCase = true) -> 
+                        "💼 [Secretario] Le recordamos que su compromiso '$taskTitle' inicia $leadTextFallback."
+                    activeRole.id == "CASUAL_FRIEND" || activeRole.displayName.contains("Amigo", ignoreCase = true) -> 
+                        "✌️ [Amigo] Ey, $leadTextFallback toca '$taskTitle'. ¡No te despistes!"
+                    else -> "🤖 [${activeRole.displayName}] ${activeRole.customPhrase} '$taskTitle' $leadTextFallback"
+                }
+
+                // Usar el mensaje pre-generado por la IA o intentar generarlo ahora mismo
                 var message = task?.preGeneratedMessage
+                var isIA = !message.isNullOrBlank()
 
                 if (message.isNullOrBlank()) {
+                    android.util.Log.d("HermesNotify", "No hay mensaje pre-generado. Intentando generar IA en tiempo real...")
                     try {
                         val geminiService = GeminiRoleService()
-                        message = geminiService.generateAdvanceNotification(
+                        val aiMsg = geminiService.generateAdvanceNotification(
                             role = activeRole,
                             taskTitle = taskTitle,
                             scheduledStartMs = scheduledStart,
                             leadMinutes = leadMinutes,
                             durationMinutes = duration,
                         )
-                        if (taskId != -1L) {
-                            db.taskDao().updatePreGeneratedMessage(taskId, message)
+                        if (aiMsg != null) {
+                            message = aiMsg
+                            isIA = true
+                        } else {
+                            message = localFallback
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
-                        val leadText = if (leadMinutes > 0) "en $leadMinutes min" else "ahora"
-                        message = "[${activeRole.displayName}] ${activeRole.customPhrase} '$taskTitle' $leadText."
+                        message = localFallback
                     }
                 }
 
-                val titleText = "🎭 ${activeRole.displayName} • $taskTitle"
+                val titleText = if (isIA) "✨ ${activeRole.displayName} • $taskTitle" else "🎭 ${activeRole.displayName} • $taskTitle"
 
                 // Acción Completar
                 val completeIntent = Intent(context, TaskNotificationReceiver::class.java).apply {
@@ -198,8 +216,12 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
+                NotificationScheduler.createNotificationChannel(context)
+
+                val notifyId = if (taskId != -1L) taskId.toInt() else (System.currentTimeMillis() and 0x7FFFFFFF).toInt()
+
                 val builder = NotificationCompat.Builder(context, NotificationScheduler.CHANNEL_ID)
-                    .setSmallIcon(com.hermes.app.R.mipmap.ic_launcher)
+                    .setSmallIcon(com.hermes.app.R.drawable.ic_launcher_foreground)
                     .setContentTitle(titleText)
                     .setContentText(message)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(message))
@@ -210,7 +232,7 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     .addAction(0, "⏱ Postergar 15m", snoozePendingIntent)
 
                 val manager = NotificationManagerCompat.from(context)
-                manager.notify(taskId.toInt(), builder.build())
+                manager.notify(notifyId, builder.build())
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

@@ -37,7 +37,17 @@ class GeminiRoleService {
     }
 
     private suspend fun generateContentWithFallback(prompt: String): String? {
-        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME, LATEST_ALIAS_NAME)
+        val candidates = listOf(
+            MODEL_NAME,
+            FALLBACK_MODEL_NAME,
+            LATEST_ALIAS_NAME,
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        )
         for (candidate in candidates) {
             val model = getModel(candidate) ?: continue
             try {
