@@ -13,10 +13,10 @@ import java.util.Locale
 
 class GeminiRoleService {
 
-    // --- CONFIGURACIÓN DE MODELOS OFICIALES ---
-    private val MODEL_NAME = "gemini-3.5-flash"
-    private val FALLBACK_MODEL_NAME = "gemini-2.5-flash"
-    private val LATEST_ALIAS_NAME = "gemini-flash-latest"
+    // --- CONFIGURACIÓN DE MODELOS (Actualizado Agosto 2026) ---
+    private val MODEL_NAME = "gemini-2.0-flash-lite"
+    private val FALLBACK_MODEL_NAME = "gemini-1.5-flash-8b"
+    private val LATEST_ALIAS_NAME = "gemini-2.0-flash"
     
     private val apiKey: String = BuildConfig.GEMINI_API_KEY
         .replace("\"", "")
@@ -37,7 +37,7 @@ class GeminiRoleService {
     }
 
     private suspend fun generateContentWithFallback(prompt: String): String? {
-        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME, LATEST_ALIAS_NAME)
+        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME)
         for (candidate in candidates) {
             val model = getModel(candidate) ?: continue
             try {

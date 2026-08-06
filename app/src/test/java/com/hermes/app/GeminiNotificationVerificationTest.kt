@@ -1,6 +1,9 @@
 package com.hermes.app
 
+import com.hermes.app.data.local.entity.TaskEntity
 import com.hermes.app.domain.RoleItem
+import com.hermes.app.domain.ai.GeminiRoleService
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -29,5 +32,37 @@ class GeminiNotificationVerificationTest {
 
         assertNotNull(fallback)
         assertEquals("🤖 [Entrenador Estricto] ¡Sin excusas! Tarea a realizar: 'Hacer ejercicio' en 15 min ($timeStr)", fallback)
+    }
+
+    @Test
+    fun testGeminiRoleServiceAdvanceNotification() = runBlocking {
+        val service = GeminiRoleService()
+        val role = RoleItem(
+            id = "STRICT_COACH",
+            displayName = "Entrenador Estricto",
+            description = "Exige máxima disciplina",
+            customPhrase = "¡Sin excusas!"
+        )
+        val result = service.generateAdvanceNotification(
+            role = role,
+            taskTitle = "Entrenamiento de cardio",
+            scheduledStartMs = System.currentTimeMillis() + 900000L,
+            leadMinutes = 15,
+            durationMinutes = 45
+        )
+        assertNotNull(result)
+    }
+
+    @Test
+    fun testGeminiTaskPriorityRanking() = runBlocking {
+        val service = GeminiRoleService()
+        val dummyTasks = listOf(
+            TaskEntity(id = 1, title = "Revisar correos urgentes", durationMinutes = 15, isFixed = false),
+            TaskEntity(id = 2, title = "Sesión de estudio profunda", durationMinutes = 90, isFixed = false),
+            TaskEntity(id = 3, title = "Organizar escritorio", durationMinutes = 10, isFixed = false)
+        )
+        val rankedIds = service.rankTasksPriority(dummyTasks)
+        assertNotNull(rankedIds)
+        assertEquals(3, rankedIds.size)
     }
 }
