@@ -117,4 +117,46 @@ class GeminiRoleService {
             fallback
         }
     }
+
+    /**
+     * Usa la IA para ordenar una lista de tareas de manera lógica y productiva.
+     * Devuelve la lista de IDs en el orden recomendado.
+     */
+    suspend fun rankTasksPriority(tasks: List<TaskEntity>): List<Long> = withContext(Dispatchers.IO) {
+        if (tasks.isEmpty()) return@withContext emptyList()
+        val model = generativeModel ?: return@withContext tasks.map { it.id }
+
+        val taskListStr = tasks.joinToString("\n") { "- ID:${it.id}: ${it.title} (${it.durationMinutes} min)" }
+
+        val prompt = """
+            Como experto en productividad personal, analiza esta lista de tareas pendientes:
+            $taskListStr
+            
+            Ordénalas de la forma más eficiente para un ser humano (considerando ritmos circadianos, importancia lógica y agrupamiento por temas).
+            Responde ÚNICAMENTE con la lista de IDs separados por comas, sin espacios ni explicaciones.
+            Ejemplo de respuesta: 1,4,2,3
+        """.trimIndent()
+
+        try {
+            val response = model.generateContent(prompt)
+            val rawText = response.text?.trim() ?: ""
+            val cleanText = rawText
+                .replace("```json", "")
+                .replace("```", "")
+                .replace("[", "")
+                .replace("]", "")
+                .trim()
+            val ids = cleanText.split(",", "\n", " ").mapNotNull { it.trim().toLongOrNull() }.distinct()
+            if (ids.isNotEmpty() && ids.size == tasks.size && ids.containsAll(tasks.map { it.id })) {
+                Log.d("GeminiRoleService", "Ranking IA exitoso: $ids")
+                ids
+            } else {
+                Log.w("GeminiRoleService", "Respuesta de ranking no coincide con IDs esperados: '$rawText'")
+                tasks.map { it.id }
+            }
+        } catch (e: Exception) {
+            Log.e("GeminiRoleService", "Error en ranking IA: ${e.message}")
+            tasks.map { it.id }
+        }
+    }
 }

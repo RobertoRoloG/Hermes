@@ -19,5 +19,6 @@ data class TaskEntity(
     val isCompleted: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val createdRole: String = "DEFAULT",
-    val preGeneratedMessage: String? = null // Almacena el mensaje de la IA generado con antelación
+    val preGeneratedMessage: String? = null, // Almacena el mensaje de la IA generado con antelación
+    val description: String? = null
 )

@@ -1,7 +1,12 @@
 package com.hermes.app.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -11,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.hermes.app.data.local.entity.TaskEntity
 import com.hermes.app.ui.theme.*
 import java.util.Calendar
@@ -26,10 +32,12 @@ fun EditTaskDialog(
     onSave: (TaskEntity) -> Unit
 ) {
     var title by remember { mutableStateOf(task.title) }
+    var description by remember { mutableStateOf(task.description ?: "") }
     var priority by remember { mutableIntStateOf(task.priority) }
     var duration by remember { mutableIntStateOf(task.durationMinutes) }
     
     var isFixed by remember { mutableStateOf(task.isFixed) }
+    var hasEndTime by remember { mutableStateOf(task.scheduledEnd != null) }
 
     val initialCal = remember(task.scheduledStart) {
         Calendar.getInstance().apply {
@@ -69,12 +77,22 @@ fun EditTaskDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Título") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("Título") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Notas / Descripción (opcional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 1,
+                            maxLines = 3
+                        )
+                    }
                 }
 
                 item {
@@ -86,17 +104,32 @@ fun EditTaskDialog(
 
                 if (isFixed) {
                     item {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Incluir hora de fin", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Checkbox(checked = hasEndTime, onCheckedChange = { hasEndTime = it })
+                        }
+                    }
+
+                    item {
                         var showStart by remember { mutableStateOf(false) }
                         var showEnd by remember { mutableStateOf(false) }
                         val startState = rememberTimePickerState(hour, minute, true)
                         val endState = rememberTimePickerState(endHour, endMinute, true)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { showStart = true }, modifier = Modifier.weight(1f)) {
-                                Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Inicio", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                OutlinedButton(onClick = { showStart = true }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
+                                }
                             }
-                            OutlinedButton(onClick = { showEnd = true }, modifier = Modifier.weight(1f)) {
-                                Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}")
+                            if (hasEndTime) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Fin", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    OutlinedButton(onClick = { showEnd = true }, modifier = Modifier.fillMaxWidth()) {
+                                        Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}")
+                                    }
+                                }
                             }
                         }
 
@@ -114,15 +147,64 @@ fun EditTaskDialog(
                 }
 
                 item {
-                    Column {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Duración", style = MaterialTheme.typography.labelSmall)
-                            Text("${duration}m", color = NeonMagenta)
+                    val durationText = remember(duration) {
+                        val h = duration / 60
+                        val m = duration % 60
+                        when {
+                            h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
+                            h > 0 -> "${h}h ($duration min)"
+                            else -> "${m}m"
                         }
-                        Slider(
-                            value = duration.toFloat(),
-                            onValueChange = { duration = ((it / 5f).roundToInt() * 5).coerceAtLeast(5) },
-                            valueRange = 5f..480f
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Text(durationText, style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                        }
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf(
+                                15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
+                                120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
+                            )) { (mins, label) ->
+                                val selected = duration == mins
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            duration = mins
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (selected) Color.Black else TextPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = duration.toString(),
+                            onValueChange = { input ->
+                                val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                                duration = valMins
+                            },
+                            label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonMagenta)
                         )
                     }
                 }
@@ -144,13 +226,27 @@ fun EditTaskDialog(
                         set(Calendar.MINUTE, minute)
                     }
                 }
+                val finalEnd = if (isFixed && hasEndTime) {
+                    val endCal = (cal.clone() as Calendar).apply {
+                        set(Calendar.HOUR_OF_DAY, endHour)
+                        set(Calendar.MINUTE, endMinute)
+                    }
+                    if (endCal.before(cal)) endCal.add(Calendar.DAY_OF_YEAR, 1)
+                    endCal.timeInMillis
+                } else if (isFixed) {
+                    null
+                } else {
+                    null
+                }
+
                 onSave(task.copy(
                     title = title,
+                    description = description.ifBlank { null },
                     priority = priority,
                     durationMinutes = duration,
                     isFixed = isFixed,
                     scheduledStart = if (isFixed) cal.timeInMillis else null,
-                    scheduledEnd = if (isFixed) cal.timeInMillis + (duration * 60 * 1000L) else null
+                    scheduledEnd = finalEnd
                 ))
             }) { Text("Guardar") }
         },

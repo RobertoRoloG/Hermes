@@ -20,7 +20,7 @@ interface TaskDao {
 
     @Query("""
         SELECT * FROM tasks 
-        WHERE (scheduledStart >= :startOfDay AND scheduledStart <= :endOfDay) 
+        WHERE (scheduledStart <= :endOfDay AND (scheduledEnd >= :startOfDay OR scheduledEnd IS NULL)) 
            OR (scheduledStart IS NULL AND createdAt >= :startOfDay AND createdAt <= :endOfDay)
         ORDER BY isCompleted ASC, scheduledStart ASC, priority DESC
     """)
@@ -37,6 +37,9 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
     suspend fun getTaskById(id: Long): TaskEntity?
+
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledStart IS NOT NULL")
+    suspend fun getActiveScheduledTasks(): List<TaskEntity>
 
     @Query("UPDATE tasks SET isCompleted = :isCompleted WHERE id = :id")
     suspend fun updateTaskStatus(id: Long, isCompleted: Boolean)

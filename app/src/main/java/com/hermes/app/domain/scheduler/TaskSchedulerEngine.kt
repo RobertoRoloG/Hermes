@@ -48,8 +48,12 @@ class TaskSchedulerEngine(
         }
 
         val sortedFixedSlots = fixedTasks.asSequence()
-            .filter { it.isFixed && (it.scheduledStart != null) && (it.scheduledEnd != null) }
-            .map { TimeSlot(it.scheduledStart!!, it.scheduledEnd!!) }
+            .filter { it.scheduledStart != null }
+            .map { task ->
+                val start = task.scheduledStart!!
+                val end = task.scheduledEnd ?: (start + (task.durationMinutes * 60 * 1000L))
+                TimeSlot(start, end)
+            }
             .filter { it.overlapsWith(TimeSlot(startOfDayRaw, endOfDay)) }
             .sortedBy { it.startTimestamp }
             .toList()
@@ -59,12 +63,16 @@ class TaskSchedulerEngine(
 
         for (fixedSlot in sortedFixedSlots) {
             val fixedStart = fixedSlot.startTimestamp.coerceAtLeast(startOfDay)
-            val fixedEnd = fixedSlot.endTimestamp.coerceAtMost(endOfDay)
+            
+            // Calculamos el buffer que esta tarea "ocupa" al terminar
+            val taskDurationMin = (fixedSlot.endTimestamp - fixedSlot.startTimestamp) / (60 * 1000)
+            val bufferMs = if (taskDurationMin >= 60) 15 * 60 * 1000L else 5 * 60 * 1000L
+            val fixedEndWithBuffer = (fixedSlot.endTimestamp + bufferMs).coerceAtMost(endOfDay)
 
             if (fixedStart > currentPointer) {
                 gaps.add(TimeSlot(currentPointer, fixedStart))
             }
-            currentPointer = currentPointer.coerceAtLeast(fixedEnd)
+            currentPointer = currentPointer.coerceAtLeast(fixedEndWithBuffer)
         }
 
         if (currentPointer < endOfDay) {
@@ -74,10 +82,6 @@ class TaskSchedulerEngine(
         return gaps
     }
 
-    /**
-     * Asigna automáticamente una tarea flexible en el primer hueco disponible
-     * que respete la duración requerida y el plazo límite (deadline).
-     */
     fun autoScheduleFlexibleTask(
         task: TaskEntity,
         startSearchDate: Calendar,
@@ -87,27 +91,52 @@ class TaskSchedulerEngine(
         require(!task.isFixed) { "El motor de auto-programación requiere una tarea flexible." }
 
         val taskDurationMs = task.durationMinutes * 60 * 1000L
-        val searchCalendar = startSearchDate.clone() as Calendar
+        
+        // Si la tarea tiene un inicio pre-marcado (p.ej. por repetición en un día), usamos ese día como inicio
+        // Si es totalmente libre (null), usamos la fecha de búsqueda global (hoy)
+        val searchCalendar = (task.scheduledStart?.let { 
+            Calendar.getInstance().apply { timeInMillis = it }
+        } ?: startSearchDate).clone() as Calendar
 
-        repeat(maxSearchDays) {
+        // Si viene con fecha pre-marcada, solemos buscar solo en ese día. 
+        // Si es null, buscamos en toda la ventana de días.
+        val limitDays = if (task.scheduledStart != null && !task.isAutoScheduled) 1 else maxSearchDays
+
+        repeat(limitDays) {
             val currentDayGaps = calculateAvailableGaps(searchCalendar, existingFixedTasks)
+            
+            // Lógica Best-Fit: Encontrar el hueco que mejor se ajuste (menor desperdicio)
+            var bestGap: TimeSlot? = null
+            var minWaste = Long.MAX_VALUE
 
             for (gap in currentDayGaps) {
-                val candidateStart = gap.startTimestamp
-                val candidateEnd = candidateStart + taskDurationMs
+                val gapDuration = gap.endTimestamp - gap.startTimestamp
+                
+                // Comprobamos si cabe la tarea (el buffer ya está implícito en la reducción de los gaps)
+                if (gapDuration >= taskDurationMs) {
+                    val waste = gapDuration - taskDurationMs
+                    
+                    val candidateEnd = gap.startTimestamp + taskDurationMs
+                    val respectsDeadline = task.deadline == null || candidateEnd <= task.deadline
 
-                val fitsInGap = candidateEnd <= gap.endTimestamp
-                val respectsDeadline = task.deadline == null || candidateEnd <= task.deadline
-
-                if (fitsInGap && respectsDeadline) {
-                    val assignedSlot = TimeSlot(candidateStart, candidateEnd)
-                    val scheduledTask = task.copy(
-                        scheduledStart = candidateStart,
-                        scheduledEnd = candidateEnd,
-                        isAutoScheduled = true
-                    )
-                    return ScheduleResult.Success(scheduledTask, assignedSlot)
+                    if (respectsDeadline && waste < minWaste) {
+                        minWaste = waste
+                        bestGap = gap
+                    }
                 }
+            }
+
+            if (bestGap != null) {
+                val assignedStart = bestGap.startTimestamp
+                val assignedEnd = assignedStart + taskDurationMs
+                
+                val scheduledTask = task.copy(
+                    scheduledStart = assignedStart,
+                    scheduledEnd = assignedEnd,
+                    isAutoScheduled = true
+                )
+                // El assignedSlot aquí es meramente informativo en el resultado actual
+                return ScheduleResult.Success(scheduledTask, TimeSlot(assignedStart, assignedEnd))
             }
 
             // Avanzar al siguiente día
@@ -115,7 +144,7 @@ class TaskSchedulerEngine(
         }
 
         return ScheduleResult.Failure(
-            "No se encontró un hueco suficiente de ${task.durationMinutes} min antes del plazo límite en $maxSearchDays días."
+            "No se encontró un hueco suficiente de ${task.durationMinutes} min en $maxSearchDays días."
         )
     }
 

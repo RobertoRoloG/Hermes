@@ -45,11 +45,6 @@ fun MyDayScreen(
     var editingTask by remember { mutableStateOf<TaskEntity?>(null) }
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
 
-    // Formulario Nueva Tarea
-    var taskTitle by remember { mutableStateOf("") }
-    var hourText by remember { mutableStateOf("09") }
-    var minuteText by remember { mutableStateOf("00") }
-
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     val dateFormatter = remember { SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")) }
     
@@ -154,12 +149,12 @@ fun MyDayScreen(
 
             // 3. Lista de Tareas (Timeline Style)
             val scheduledTasks = remember(dayTasks) {
-                dayTasks.filter { it.scheduledStart != null && it.scheduledEnd != null }
+                dayTasks.filter { it.scheduledStart != null && (it.isFixed || it.scheduledEnd != null) }
                     .sortedBy { it.scheduledStart }
             }
             
             val unscheduledTasks = remember(dayTasks) {
-                dayTasks.filter { it.scheduledStart == null || it.scheduledEnd == null }
+                dayTasks.filter { it.scheduledStart == null || (!it.isFixed && it.scheduledEnd == null) }
             }
 
             LazyColumn(
@@ -241,15 +236,17 @@ fun MyDayScreen(
 
     if (showCreateModal) {
         CreateTaskDialog(
+            initialDate = selectedCalendar,
             onDismiss = { showCreateModal = false },
             onSave = { rawTask, days, weeks ->
                 if (days.isNotEmpty()) {
+                    val cal = rawTask.scheduledStart?.let { Calendar.getInstance().apply { timeInMillis = it } } ?: selectedCalendar
                     viewModel.addTasksForDaysOfWeek(
                         baseTask = rawTask, 
                         selectedDaysOfWeek = days, 
-                        startCalendar = selectedCalendar, 
-                        fixedStartHour = hourText.toInt(), 
-                        fixedStartMinute = minuteText.toInt(),
+                        startCalendar = cal, 
+                        fixedStartHour = cal.get(Calendar.HOUR_OF_DAY), 
+                        fixedStartMinute = cal.get(Calendar.MINUTE),
                         numWeeks = weeks
                     )
                 } else {
@@ -342,38 +339,44 @@ private fun isSameDay(c1: Calendar, c2: Calendar): Boolean {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateTaskDialog(onDismiss: () -> Unit, onSave: (TaskEntity, Set<Int>, Int) -> Unit) {
+fun CreateTaskDialog(
+    initialDate: Calendar,
+    onDismiss: () -> Unit,
+    onSave: (TaskEntity, Set<Int>, Int) -> Unit
+) {
     var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
     var duration by remember { mutableIntStateOf(30) }
     var priority by remember { mutableIntStateOf(1) }
+    
+    // Sección ¿Cuándo?
+    var letHermesChooseDate by remember { mutableStateOf(false) }
+    var taskDate by remember { mutableStateOf(initialDate) }
+    var deadlineDate by remember { mutableStateOf<Calendar?>(null) }
     var isFixed by remember { mutableStateOf(false) }
+    var hasEndTime by remember { mutableStateOf(true) }
     var hour by remember { mutableIntStateOf(9) }
     var minute by remember { mutableIntStateOf(0) }
-    
-    // Nueva lógica para hora de fin
     var endHour by remember { mutableIntStateOf(9) }
     var endMinute by remember { mutableIntStateOf(30) }
-    
+
+    // Sección Repetición
     var selectedDays by remember { mutableStateOf(setOf<Int>()) }
     var numWeeks by remember { mutableIntStateOf(1) }
 
+    var showDatePickerInDialog by remember { mutableStateOf(false) }
+    var showDeadlinePicker by remember { mutableStateOf(false) }
+
     val daysOfWeekList = listOf(
-        Calendar.MONDAY to "L",
-        Calendar.TUESDAY to "M",
-        Calendar.WEDNESDAY to "X",
-        Calendar.THURSDAY to "J",
-        Calendar.FRIDAY to "V",
-        Calendar.SATURDAY to "S",
+        Calendar.MONDAY to "L", Calendar.TUESDAY to "M", Calendar.WEDNESDAY to "X",
+        Calendar.THURSDAY to "J", Calendar.FRIDAY to "V", Calendar.SATURDAY to "S",
         Calendar.SUNDAY to "D"
     )
 
-    // Sincronizar duración si cambian horas o viceversa
     fun updateDurationFromHours() {
         val startTotal = hour * 60 + minute
         var endTotal = endHour * 60 + endMinute
-        if (endTotal <= startTotal) {
-            endTotal += 24 * 60 // Día siguiente
-        }
+        if (endTotal <= startTotal) endTotal += 24 * 60
         duration = endTotal - startTotal
     }
 
@@ -387,203 +390,225 @@ fun CreateTaskDialog(onDismiss: () -> Unit, onSave: (TaskEntity, Set<Int>, Int) 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        title = { Text("Nueva Tarea", color = NeonCyan) },
+        title = { Text("Nueva Tarea", color = NeonCyan, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // SECCIÓN 1: ¿QUÉ VAS A HACER?
                 item {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Título de la tarea") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = NeonCyan,
-                            unfocusedBorderColor = SurfaceVariantDark
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SectionLabel("¿QUÉ VAS A HACER?")
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            placeholder = { Text("Ej: Ir al gimnasio") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
                         )
-                    )
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (isFixed) Icons.Default.Lock else Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = if (isFixed) NeonAmber else NeonCyan,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                if (isFixed) "Hora Fija" else "Auto CSP Flexible",
-                                color = if (isFixed) NeonAmber else NeonCyan,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Switch(
-                            checked = isFixed,
-                            onCheckedChange = { isFixed = it },
-                            colors = SwitchDefaults.colors(
-                                checkedTrackColor = NeonAmber,
-                                uncheckedTrackColor = NeonCyan
-                            )
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            placeholder = { Text("Notas / Descripción (opcional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 1,
+                            maxLines = 3,
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
                         )
-                    }
-                }
-
-                if (isFixed) {
-                    item {
-                        var showStartTimePicker by remember { mutableStateOf(false) }
-                        var showEndTimePicker by remember { mutableStateOf(false) }
                         
-                        val startTimePickerState = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
-                        val endTimePickerState = rememberTimePickerState(initialHour = endHour, initialMinute = endMinute, is24Hour = true)
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Inicio:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                    OutlinedButton(
-                                        onClick = { showStartTimePicker = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
-                                    ) {
-                                        Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}", color = TextPrimary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Fin:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                    OutlinedButton(
-                                        onClick = { showEndTimePicker = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, NeonMagenta.copy(alpha = 0.5f))
-                                    ) {
-                                        Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}", color = TextPrimary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-
-                            if (showStartTimePicker) {
-                                TimePickerDialog(
-                                    onDismissRequest = { showStartTimePicker = false },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            hour = startTimePickerState.hour
-                                            minute = startTimePickerState.minute
-                                            updateDurationFromHours()
-                                            showStartTimePicker = false
-                                        }) { Text("OK", color = NeonCyan) }
-                                    }
-                                ) { TimePicker(state = startTimePickerState) }
-                            }
-                            if (showEndTimePicker) {
-                                TimePickerDialog(
-                                    onDismissRequest = { showEndTimePicker = false },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            endHour = endTimePickerState.hour
-                                            endMinute = endTimePickerState.minute
-                                            updateDurationFromHours()
-                                            showEndTimePicker = false
-                                        }) { Text("OK", color = NeonCyan) }
-                                    }
-                                ) { TimePicker(state = endTimePickerState) }
+                        val durationText = remember(duration) {
+                            val h = duration / 60
+                            val m = duration % 60
+                            when {
+                                h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
+                                h > 0 -> "${h}h ($duration min)"
+                                else -> "${m}m"
                             }
                         }
-                    }
-                }
 
-                item {
-                    Column {
-                        Text("Días de la semana:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            daysOfWeekList.forEach { (code, label) ->
-                                val isSelected = code in selectedDays
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(
-                                            if (isSelected) NeonCyan else SurfaceVariantDark,
-                                            RoundedCornerShape(8.dp)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                Text(durationText, style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                            }
+
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(listOf(
+                                    15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
+                                    120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
+                                )) { (mins, label) ->
+                                    val selected = duration == mins
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .clickable {
+                                                duration = mins
+                                                if (isFixed) updateEndHourFromDuration()
+                                            }
+                                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            color = if (selected) Color.Black else TextPrimary,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold
                                         )
-                                        .clickable {
-                                            selectedDays = if (isSelected) selectedDays - code else selectedDays + code
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(label, color = if (isSelected) Color.Black else TextPrimary, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
-                        }
-                    }
-                }
 
-                item {
-                    Column {
-                        Text("Repetir durante (semanas):", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            IconButton(
-                                onClick = { if (numWeeks > 1) numWeeks-- },
-                                modifier = Modifier.size(32.dp).background(SurfaceVariantDark, RoundedCornerShape(8.dp))
-                            ) { Icon(Icons.Default.Remove, contentDescription = "Menos", tint = TextPrimary) }
-                            Text(text = numWeeks.toString(), style = MaterialTheme.typography.titleLarge, color = NeonCyan, fontWeight = FontWeight.Bold)
-                            IconButton(
-                                onClick = { if (numWeeks < 12) numWeeks++ },
-                                modifier = Modifier.size(32.dp).background(SurfaceVariantDark, RoundedCornerShape(8.dp))
-                            ) { Icon(Icons.Default.Add, contentDescription = "Más", tint = TextPrimary) }
-                        }
-                    }
-                }
-
-                item {
-                    Text("Prioridad", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(1 to "Baja", 2 to "Media", 3 to "Alta").forEach { (p, label) ->
-                            FilterChip(
-                                selected = priority == p,
-                                onClick = { priority = p },
-                                label = { Text(label) }
+                            OutlinedTextField(
+                                value = duration.toString(),
+                                onValueChange = { input ->
+                                    val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                                    duration = valMins
+                                    if (isFixed) updateEndHourFromDuration()
+                                },
+                                label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonMagenta)
                             )
                         }
+
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Prioridad:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            listOf(1 to "Baja", 2 to "Media", 3 to "Alta").forEach { (p, label) ->
+                                FilterChip(
+                                    selected = priority == p,
+                                    onClick = { priority = p },
+                                    label = { Text(label, fontSize = 10.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }.copy(alpha = 0.2f),
+                                        selectedLabelColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
 
+                item { Divider(color = SurfaceVariantDark) }
+
+                // SECCIÓN 2: ¿CUÁNDO?
                 item {
-                    Column {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Duración", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            Text("${duration}m", style = MaterialTheme.typography.labelSmall, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SectionLabel("¿CUÁNDO?")
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Delegar día a Hermes", color = TextPrimary)
+                            Switch(checked = letHermesChooseDate, onCheckedChange = { letHermesChooseDate = it; if(it) isFixed = false }, colors = SwitchDefaults.colors(checkedTrackColor = NeonCyan))
                         }
-                        Slider(
-                            value = duration.toFloat(),
-                            onValueChange = { 
-                                duration = ((it / 5f).roundToInt() * 5).coerceAtLeast(5)
-                                if (isFixed) updateEndHourFromDuration()
-                            },
-                            valueRange = 5f..480f,
-                            colors = SliderDefaults.colors(thumbColor = NeonMagenta, activeTrackColor = NeonMagenta)
-                        )
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(listOf(15, 30, 45, 60, 90, 120)) { d ->
-                                FilterChip(
-                                    selected = duration == d,
-                                    onClick = { 
-                                        duration = d
-                                        if (isFixed) updateEndHourFromDuration()
-                                    },
-                                    label = { Text("${d}m") }
-                                )
+
+                        if (!letHermesChooseDate) {
+                            OutlinedButton(
+                                onClick = { showDatePickerInDialog = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
+                            ) {
+                                Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(taskDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
+                            }
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Lock, contentDescription = null, tint = if(isFixed) NeonAmber else TextSecondary, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Fijar hora exacta", color = if(isFixed) NeonAmber else TextPrimary)
+                                }
+                                Switch(checked = isFixed, onCheckedChange = { isFixed = it }, colors = SwitchDefaults.colors(checkedTrackColor = NeonAmber))
+                            }
+
+                            if (isFixed) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Incluir hora de fin", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                    Checkbox(checked = hasEndTime, onCheckedChange = { hasEndTime = it }, colors = CheckboxDefaults.colors(checkedColor = NeonMagenta))
+                                }
+
+                                var showStartT by remember { mutableStateOf(false) }
+                                var showEndT by remember { mutableStateOf(false) }
+                                val sState = rememberTimePickerState(hour, minute, true)
+                                val eState = rememberTimePickerState(endHour, endMinute, true)
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Inicio", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                                        OutlinedButton(onClick = { showStartT = true }, modifier = Modifier.fillMaxWidth()) {
+                                            Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
+                                        }
+                                    }
+                                    if (hasEndTime) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Fin", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                                            OutlinedButton(onClick = { showEndT = true }, modifier = Modifier.fillMaxWidth()) {
+                                                Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}")
+                                            }
+                                        }
+                                    }
+                                }
+                                if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
+                                if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
+                            }
+                        } else {
+                            // Hermes elige: opcionalmente pedir Deadline
+                            Column {
+                                Text("Fecha límite (opcional)", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                OutlinedButton(
+                                    onClick = { showDeadlinePicker = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonMagenta.copy(alpha = 0.3f))
+                                ) {
+                                    val dStr = deadlineDate?.let { SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(it.time) } ?: "Sin límite (máx 14 días)"
+                                    Text(dStr, color = if(deadlineDate != null) TextPrimary else TextSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item { Divider(color = SurfaceVariantDark) }
+
+                // SECCIÓN 3: REPETICIÓN
+                item {
+                    var showRepetition by remember { mutableStateOf(false) }
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showRepetition = !showRepetition }) {
+                            SectionLabel("OPCIONES DE REPETICIÓN")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(if(showRepetition) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        }
+                        
+                        AnimatedVisibility(visible = showRepetition) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    daysOfWeekList.forEach { (code, label) ->
+                                        val isSelected = code in selectedDays
+                                        Box(
+                                            modifier = Modifier.size(34.dp).background(if (isSelected) NeonCyan else SurfaceVariantDark, RoundedCornerShape(8.dp))
+                                                .clickable { selectedDays = if (isSelected) selectedDays - code else selectedDays + code },
+                                            contentAlignment = Alignment.Center
+                                        ) { Text(label, color = if (isSelected) Color.Black else TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                                    }
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("Repetir durante", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(onClick = { if (numWeeks > 1) numWeeks-- }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Remove, contentDescription = null, tint = TextPrimary) }
+                                        Text(numWeeks.toString(), color = NeonCyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+                                        IconButton(onClick = { if (numWeeks < 12) numWeeks++ }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Add, contentDescription = null, tint = TextPrimary) }
+                                        Text("semanas", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.padding(start = 4.dp))
+                                    }
+                                }
                             }
                         }
                     }
@@ -593,23 +618,44 @@ fun CreateTaskDialog(onDismiss: () -> Unit, onSave: (TaskEntity, Set<Int>, Int) 
         confirmButton = {
             Button(
                 onClick = {
-                    val cal = Calendar.getInstance()
-                    var start: Long? = null
-                    var end: Long? = null
-                    if (isFixed) {
+                    val finalStart: Long?
+                    val finalEnd: Long?
+                    if (!letHermesChooseDate && isFixed) {
+                        val cal = taskDate.clone() as Calendar
                         cal.set(Calendar.HOUR_OF_DAY, hour)
                         cal.set(Calendar.MINUTE, minute)
-                        start = cal.timeInMillis
-                        end = start + (duration * 60 * 1000L)
+                        finalStart = cal.timeInMillis
+                        finalEnd = if (hasEndTime) {
+                            val endCal = taskDate.clone() as Calendar
+                            endCal.set(Calendar.HOUR_OF_DAY, endHour)
+                            endCal.set(Calendar.MINUTE, endMinute)
+                            if (endCal.before(cal)) endCal.add(Calendar.DAY_OF_YEAR, 1)
+                            endCal.timeInMillis
+                        } else {
+                            null
+                        }
+                    } else if (!letHermesChooseDate) {
+                        // Fecha concreta pero flexible (sin hora fija)
+                        val cal = taskDate.clone() as Calendar
+                        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
+                        finalStart = cal.timeInMillis // Se marcará como flexible el motor buscará este día
+                        finalEnd = null
+                    } else {
+                        // Hermes elige el día
+                        finalStart = null
+                        finalEnd = null
                     }
+
                     onSave(
                         TaskEntity(
                             title = title,
+                            description = description.ifBlank { null },
                             durationMinutes = duration,
                             priority = priority,
-                            isFixed = isFixed,
-                            scheduledStart = start,
-                            scheduledEnd = end
+                            isFixed = isFixed && !letHermesChooseDate,
+                            scheduledStart = finalStart,
+                            scheduledEnd = finalEnd,
+                            deadline = deadlineDate?.timeInMillis
                         ),
                         selectedDays,
                         numWeeks
@@ -621,4 +667,23 @@ fun CreateTaskDialog(onDismiss: () -> Unit, onSave: (TaskEntity, Set<Int>, Int) 
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
+
+    // Pickers externos
+    if (showDatePickerInDialog) {
+        val dpState = rememberDatePickerState(initialSelectedDateMillis = taskDate.timeInMillis)
+        DatePickerDialog(onDismissRequest = { showDatePickerInDialog = false }, confirmButton = {
+            TextButton(onClick = { dpState.selectedDateMillis?.let { taskDate = Calendar.getInstance().apply { timeInMillis = it } }; showDatePickerInDialog = false }) { Text("OK") }
+        }) { DatePicker(dpState) }
+    }
+    if (showDeadlinePicker) {
+        val dpState = rememberDatePickerState(initialSelectedDateMillis = deadlineDate?.timeInMillis ?: (System.currentTimeMillis() + 86400000 * 7))
+        DatePickerDialog(onDismissRequest = { showDeadlinePicker = false }, confirmButton = {
+            TextButton(onClick = { dpState.selectedDateMillis?.let { deadlineDate = Calendar.getInstance().apply { timeInMillis = it } }; showDeadlinePicker = false }) { Text("OK") }
+        }, dismissButton = { TextButton(onClick = { deadlineDate = null; showDeadlinePicker = false }) { Text("Quitar Límite") } }) { DatePicker(dpState) }
+    }
+}
+
+@Composable
+fun SectionLabel(text: String) {
+    Text(text = text, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
 }

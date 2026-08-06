@@ -55,11 +55,9 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         val contextualized = roleManager.applyRoleContextToTask(task)
         viewModelScope.launch(Dispatchers.IO) {
             val insertedId = database.taskDao().insertTask(contextualized)
-            var savedTask = contextualized.copy(id = insertedId)
+            val savedTask = contextualized.copy(id = insertedId)
 
-            if (!savedTask.isFixed) {
-                runAutoSchedulerForDate(_selectedCalendar.value)
-            } else if (savedTask.scheduledStart != null) {
+            if (savedTask.scheduledStart != null) {
                 NotificationScheduler.scheduleTaskNotification(context, savedTask)
             }
 
@@ -98,19 +96,24 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
                 val dayOfWeek = currentCal.get(Calendar.DAY_OF_WEEK)
                 if (dayOfWeek in selectedDaysOfWeek) {
-                    var startMs: Long? = null
+                    val startMs: Long?
                     var endMs: Long? = null
 
                     if (baseTask.isFixed) {
                         startMs = currentCal.timeInMillis
-                        endMs = startMs + (baseTask.durationMinutes * 60 * 1000L)
+                        endMs = baseTask.scheduledEnd?.let {
+                            startMs + (baseTask.durationMinutes * 60 * 1000L)
+                        }
+                    } else {
+                        startMs = currentCal.timeInMillis
                     }
 
                     val taskForDay = baseTask.copy(
                         id = 0,
                         scheduledStart = startMs,
                         scheduledEnd = endMs,
-                        createdAt = System.currentTimeMillis()
+                        createdAt = System.currentTimeMillis(),
+                        isAutoScheduled = false
                     )
                     val contextualized = roleManager.applyRoleContextToTask(taskForDay)
                     val insertedId = database.taskDao().insertTask(contextualized)
@@ -122,8 +125,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                     createdTasks.add(savedTask)
                 }
             }
-
-            runAutoSchedulerForDate(startCalendar)
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(
@@ -146,7 +147,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                     NotificationScheduler.scheduleTaskNotification(context, task)
                 }
             }
-            runAutoSchedulerForDate(_selectedCalendar.value)
         }
     }
 
@@ -154,7 +154,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             database.taskDao().deleteTask(task)
             NotificationScheduler.cancelTaskNotification(context, task.id)
-            runAutoSchedulerForDate(_selectedCalendar.value)
         }
     }
 
@@ -168,31 +167,47 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 NotificationScheduler.cancelTaskNotification(context, task.id)
             }
-            runAutoSchedulerForDate(_selectedCalendar.value)
         }
     }
 
     fun runAutoScheduler() {
         viewModelScope.launch(Dispatchers.IO) {
-            runAutoSchedulerForDate(_selectedCalendar.value)
+            runAutoSchedulerForDate(_selectedCalendar.value, useAI = true)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Tareas re-planificadas con éxito", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    private suspend fun runAutoSchedulerForDate(searchDate: Calendar) {
+    private suspend fun runAutoSchedulerForDate(searchDate: Calendar, useAI: Boolean = false) {
         val fixedTasks = database.taskDao().getFixedTasks()
-        val flexibleTasks = database.taskDao().getAllFlexibleTasks()
+        var flexibleTasks = database.taskDao().getAllFlexibleTasks()
 
         if (flexibleTasks.isEmpty()) return
 
-        val scheduledResults = schedulerEngine.batchScheduleFlexibleTasks(
+        // --- OPTIMIZACIÓN ASISTIDA POR IA ---
+        if (useAI) {
+            val aiRankedIds = roleManager.getAIRankedTaskIds(flexibleTasks)
+            if (aiRankedIds.isNotEmpty()) {
+                // Reordenar la lista según lo que dijo Gemini
+                val idMap = flexibleTasks.associateBy { it.id }
+                flexibleTasks = aiRankedIds.mapNotNull { idMap[it] }
+            }
+        }
+
+        // El motor usa los límites por defecto (08:00 - 20:00) ya que se eliminó la configuración de UI
+        val dynamicEngine = TaskSchedulerEngine()
+
+        // Window de búsqueda de 14 días para mayor flexibilidad
+        val scheduledResults = dynamicEngine.batchScheduleFlexibleTasks(
             flexibleTasks = flexibleTasks,
             startSearchDate = searchDate,
-            maxSearchDays = 7,
+            maxSearchDays = 14,
             fixedTasks = fixedTasks
         )
 
         for (scheduled in scheduledResults) {
-            if (scheduled.scheduledStart != null && scheduled.scheduledEnd != null) {
+            if (scheduled.scheduledStart != null && (scheduled.scheduledEnd != null)) {
                 database.taskDao().updateTaskSchedule(
                     id = scheduled.id,
                     start = scheduled.scheduledStart,
@@ -204,7 +219,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } else {
                 // Si no se pudo agendar, limpiar horario anterior si lo tenía
-                database.taskDao().updateTaskSchedule(scheduled.id, null, null, false)
+                database.taskDao().updateTaskSchedule(
+                    id = scheduled.id,
+                    start = null,
+                    end = null,
+                    isAutoScheduled = false
+                )
                 NotificationScheduler.cancelTaskNotification(context, scheduled.id)
             }
         }

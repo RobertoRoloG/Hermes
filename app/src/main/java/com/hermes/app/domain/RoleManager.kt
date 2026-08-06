@@ -25,6 +25,8 @@ class RoleManager(context: Context) {
         private const val KEY_ACTIVE_ROLE_IDS = "active_role_ids_set"
         private const val KEY_ASSISTANT_NAME = "assistant_name"
         private const val KEY_CUSTOM_ROLES_JSON = "custom_roles_json"
+        private const val KEY_WORK_DAY_START_HOUR = "work_day_start_hour"
+        private const val KEY_WORK_DAY_END_HOUR = "work_day_end_hour"
 
         val DEFAULT_ROLES = listOf(
             RoleItem(
@@ -47,6 +49,12 @@ class RoleManager(context: Context) {
             )
         )
     }
+
+    fun getWorkDayStartHour(): Int = prefs.getInt(KEY_WORK_DAY_START_HOUR, 8)
+    fun setWorkDayStartHour(hour: Int) { prefs.edit().putInt(KEY_WORK_DAY_START_HOUR, hour.coerceIn(0, 23)).apply() }
+
+    fun getWorkDayEndHour(): Int = prefs.getInt(KEY_WORK_DAY_END_HOUR, 20)
+    fun setWorkDayEndHour(hour: Int) { prefs.edit().putInt(KEY_WORK_DAY_END_HOUR, hour.coerceIn(1, 24)).apply() }
 
     fun getAllRoles(): List<RoleItem> {
         val customJson = prefs.getString(KEY_CUSTOM_ROLES_JSON, null)
@@ -199,6 +207,13 @@ class RoleManager(context: Context) {
     suspend fun generateDynamicNotificationMessage(task: TaskEntity): String {
         val assignedRole = getRoleByDisplayName(task.createdRole)
         return geminiRoleService.generateRoleNotification(assignedRole, task)
+    }
+
+    /**
+     * Usa a Gemini para obtener el orden ideal de ejecución de un grupo de tareas.
+     */
+    suspend fun getAIRankedTaskIds(tasks: List<TaskEntity>): List<Long> {
+        return geminiRoleService.rankTasksPriority(tasks)
     }
 }
 

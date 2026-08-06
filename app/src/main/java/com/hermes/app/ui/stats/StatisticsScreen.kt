@@ -27,8 +27,11 @@ import com.hermes.app.data.local.entity.TaskEntity
 import com.hermes.app.ui.theme.*
 import java.util.Calendar
 
+import androidx.compose.ui.platform.LocalContext
+import com.hermes.app.utils.ExcelExporter
+
 enum class StatsTimeRange {
-    DIARIO, SEMANAL, MENSUAL, ANUAL
+    DIARIO, SEMANAL
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,9 +40,10 @@ fun StatisticsScreen(
     tasks: List<TaskEntity>,
     roleManager: com.hermes.app.domain.RoleManager
 ) {
+    val context = LocalContext.current
     var selectedRange by remember { mutableStateOf(StatsTimeRange.SEMANAL) }
 
-    // FILTRADO DINÁMICO DE TAREAS SEGÚN EL RANGO SELECCIONADO
+    // FILTRADO DINÁMICO DE TAREAS SEGÚN EL RANGO SELECCIONADO (DIARIO O SEMANAL)
     val filteredTasks = remember(tasks, selectedRange) {
         val now = Calendar.getInstance()
         
@@ -53,12 +57,6 @@ fun StatisticsScreen(
                 StatsTimeRange.DIARIO -> { /* Ya es hoy */ }
                 StatsTimeRange.SEMANAL -> {
                     set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-                }
-                StatsTimeRange.MENSUAL -> {
-                    set(Calendar.DAY_OF_MONTH, 1)
-                }
-                StatsTimeRange.ANUAL -> {
-                    set(Calendar.DAY_OF_YEAR, 1)
                 }
             }
         }.timeInMillis
@@ -74,12 +72,6 @@ fun StatisticsScreen(
                 StatsTimeRange.SEMANAL -> {
                     set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
                     add(Calendar.DAY_OF_YEAR, 6)
-                }
-                StatsTimeRange.MENSUAL -> {
-                    set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
-                }
-                StatsTimeRange.ANUAL -> {
-                    set(Calendar.DAY_OF_YEAR, getActualMaximum(Calendar.DAY_OF_YEAR))
                 }
             }
         }.timeInMillis
@@ -131,42 +123,53 @@ fun StatisticsScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // SELECTOR DE RANGO TEMPORAL CYBERPUNK (DIARIO, SEMANAL, MENSUAL, ANUAL)
+            // SELECTOR DE RANGO TEMPORAL (DIARIO, SEMANAL) Y BOTÓN EXPORTAR EXCEL
             item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    listOf(
-                        StatsTimeRange.DIARIO to "Diario",
-                        StatsTimeRange.SEMANAL to "Semanal",
-                        StatsTimeRange.MENSUAL to "Mensual",
-                        StatsTimeRange.ANUAL to "Anual"
-                    ).forEach { (range, label) ->
-                        val isSelected = selectedRange == range
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(
-                                    color = if (isSelected) NeonCyan else SurfaceDark,
-                                    shape = RoundedCornerShape(10.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(
+                            StatsTimeRange.DIARIO to "Diario",
+                            StatsTimeRange.SEMANAL to "Semanal"
+                        ).forEach { (range, label) ->
+                            val isSelected = selectedRange == range
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        color = if (isSelected) NeonCyan else SurfaceDark,
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) NeonCyan else SurfaceVariantDark,
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable { selectedRange = range }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.Black else TextPrimary
                                 )
-                                .border(
-                                    1.dp,
-                                    if (isSelected) NeonCyan else SurfaceVariantDark,
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .clickable { selectedRange = range }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.Black else TextPrimary
-                            )
+                            }
                         }
+                    }
+
+                    Button(
+                        onClick = {
+                            ExcelExporter.exportTasksToExcel(context, filteredTasks, selectedRange)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Exportar planning a Excel", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
             }

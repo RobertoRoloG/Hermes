@@ -71,7 +71,7 @@ object NotificationScheduler {
         }
 
         // Request code diferenciado para preparación y disparo
-        val requestCode = if (isPrepareOnly) (task.id * 2 + 1).toInt() else (task.id * 2).toInt()
+        val requestCode = getAlarmRequestCode(task.id, isPrepareOnly)
 
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -97,7 +97,7 @@ object NotificationScheduler {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         
         // Cancelar ambas alarmas
-        listOf((taskId * 2).toInt(), (taskId * 2 + 1).toInt()).forEach { requestCode ->
+        listOf(getAlarmRequestCode(taskId, false), getAlarmRequestCode(taskId, true)).forEach { requestCode ->
             val intent = Intent(context, TaskNotificationReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -110,5 +110,10 @@ object NotificationScheduler {
                 pendingIntent.cancel()
             }
         }
+    }
+
+    fun getAlarmRequestCode(taskId: Long, isPrepareOnly: Boolean): Int {
+        val baseHash = (taskId xor (taskId ushr 32)).toInt() and 0x3FFFFFFF
+        return if (isPrepareOnly) (baseHash * 2 + 1) else (baseHash * 2)
     }
 }

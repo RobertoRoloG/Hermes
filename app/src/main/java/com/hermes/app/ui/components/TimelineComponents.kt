@@ -23,6 +23,14 @@ import com.hermes.app.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+
 @Composable
 fun InteractiveTimelineCard(
     task: TaskEntity,
@@ -33,6 +41,8 @@ fun InteractiveTimelineCard(
     onLockTaskAsFixed: () -> Unit,
     onShiftMinutes: (Int) -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     val startStr = task.scheduledStart?.let { timeFormatter.format(Date(it)) } ?: "--:--"
     val endStr = task.scheduledEnd?.let { timeFormatter.format(Date(it)) } ?: "--:--"
 
@@ -51,6 +61,7 @@ fun InteractiveTimelineCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { isExpanded = !isExpanded }
             .border(
                 1.dp,
                 if (task.isCompleted) SurfaceVariantDark else badgeColor.copy(alpha = 0.4f),
@@ -99,7 +110,7 @@ fun InteractiveTimelineCard(
                         Icon(Icons.Default.Schedule, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "$startStr - $endStr",
+                            text = if (task.scheduledEnd != null) "$startStr - $endStr" else startStr,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (task.isCompleted) TextSecondary else NeonCyan
@@ -143,13 +154,41 @@ fun InteractiveTimelineCard(
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (task.isCompleted) TextSecondary else TextPrimary,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (task.isCompleted) TextSecondary else TextPrimary,
+                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                    )
+                    if (!task.description.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            Icons.Default.Description,
+                            contentDescription = "Tiene descripción",
+                            tint = NeonCyan,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+
+                AnimatedVisibility(visible = isExpanded && !task.description.isNullOrBlank()) {
+                    Surface(
+                        color = SurfaceVariantDark.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                    ) {
+                        Text(
+                            text = task.description ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 

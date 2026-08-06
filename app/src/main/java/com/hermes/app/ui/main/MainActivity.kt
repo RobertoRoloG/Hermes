@@ -222,7 +222,12 @@ class MainActivity : ComponentActivity() {
 
         if (unscheduledFlexible.isEmpty()) return
 
-        val scheduledResults = schedulerEngine.batchScheduleFlexibleTasks(
+        val dynamicEngine = TaskSchedulerEngine(
+            workDayStartHour = roleManager.getWorkDayStartHour(),
+            workDayEndHour = roleManager.getWorkDayEndHour()
+        )
+
+        val scheduledResults = dynamicEngine.batchScheduleFlexibleTasks(
             flexibleTasks = unscheduledFlexible,
             startSearchDate = Calendar.getInstance(),
             maxSearchDays = 7,
