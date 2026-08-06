@@ -13,10 +13,10 @@ import java.util.Locale
 
 class GeminiRoleService {
 
-    // --- CONFIGURACIÓN DE MODELOS (Actualizado Agosto 2026) ---
+    // --- CONFIGURACIÓN DE MODELOS (Actualizado para Google AI SDK v1beta) ---
     private val MODEL_NAME = "gemini-2.0-flash-lite"
-    private val FALLBACK_MODEL_NAME = "gemini-1.5-flash-8b"
-    private val LATEST_ALIAS_NAME = "gemini-2.0-flash"
+    private val FALLBACK_MODEL_NAME = "gemini-2.0-flash"
+    private val LATEST_ALIAS_NAME = "gemini-1.5-flash"
     
     private val apiKey: String = BuildConfig.GEMINI_API_KEY
         .replace("\"", "")
@@ -37,7 +37,7 @@ class GeminiRoleService {
     }
 
     private suspend fun generateContentWithFallback(prompt: String): String? {
-        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME)
+        val candidates = listOf(MODEL_NAME, FALLBACK_MODEL_NAME, LATEST_ALIAS_NAME)
         for (candidate in candidates) {
             val model = getModel(candidate) ?: continue
             try {
@@ -84,6 +84,7 @@ class GeminiRoleService {
 
     /**
      * Genera un mensaje de pre-alerta notificando la antelación restante.
+     * Devuelve null si la IA falla para permitir que el llamador maneje el fallback local.
      */
     suspend fun generateAdvanceNotification(
         role: RoleItem,
@@ -91,20 +92,8 @@ class GeminiRoleService {
         scheduledStartMs: Long,
         leadMinutes: Int,
         durationMinutes: Int
-    ): String = withContext(Dispatchers.IO) {
+    ): String? = withContext(Dispatchers.IO) {
         val timeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(scheduledStartMs))
-        val leadText = if (leadMinutes > 0) "en $leadMinutes min ($timeStr)" else "a las $timeStr"
-
-        val fallback = when {
-            role.id == "STRICT_COACH" || role.displayName.contains("Entrenador", ignoreCase = true) -> 
-                "🏋️‍♂️ [Entrenador] Faltan $leadMinutes min para '$taskTitle'. ¡Prepárate ya!"
-            role.id == "FORMAL_SECRETARY" || role.displayName.contains("Secretario", ignoreCase = true) -> 
-                "💼 [Secretario] Le recordamos que su compromiso '$taskTitle' inicia $leadText."
-            role.id == "CASUAL_FRIEND" || role.displayName.contains("Amigo", ignoreCase = true) -> 
-                "✌️ [Amigo] Ey, $leadText toca '$taskTitle'. ¡No te despistes!"
-            else -> "🤖 [${role.displayName}] ${role.customPhrase} '$taskTitle' $leadText"
-        }
-
         val leadStr = if (leadMinutes > 0) "Quedan $leadMinutes minutos para empezar" else "Empieza ahora mismo"
 
         val prompt = """
@@ -113,7 +102,7 @@ class GeminiRoleService {
             Genera una sola frase urgente, corta e impactante según tu personalidad. No uses comillas.
         """.trimIndent()
 
-        generateContentWithFallback(prompt) ?: fallback
+        generateContentWithFallback(prompt)
     }
 
     /**

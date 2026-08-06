@@ -43,13 +43,12 @@ class GeminiNotificationVerificationTest {
             description = "Exige máxima disciplina",
             customPhrase = "¡Sin excusas!"
         )
-        val result = service.generateAdvanceNotification(
-            role = role,
-            taskTitle = "Entrenamiento de cardio",
-            scheduledStartMs = System.currentTimeMillis() + 900000L,
-            leadMinutes = 15,
+        val task = TaskEntity(
+            title = "Entrenamiento de cardio",
+            scheduledStart = System.currentTimeMillis() + 900000L,
             durationMinutes = 45
         )
+        val result = service.generateRoleNotification(role, task)
         assertNotNull(result)
     }
 
