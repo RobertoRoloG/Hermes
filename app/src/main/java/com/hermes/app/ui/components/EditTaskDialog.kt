@@ -215,7 +215,7 @@ fun EditTaskDialog(
                         Text("Notificación con antelación", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(listOf(
-                                0 to "Sin aviso", 5 to "5m", 15 to "15m", 30 to "30m",
+                                0 to "En el momento (0m)", 5 to "5m", 15 to "15m", 30 to "30m",
                                 60 to "1h", 120 to "2h", 1440 to "1 día"
                             )) { (mins, label) ->
                                 val selected = reminderLeadMinutes == mins
@@ -237,6 +237,19 @@ fun EditTaskDialog(
                                 }
                             }
                         }
+
+                        OutlinedTextField(
+                            value = reminderLeadMinutes.toString(),
+                            onValueChange = { input ->
+                                val m = input.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                                reminderLeadMinutes = m
+                            },
+                            label = { Text("Antelación personalizada (min)", color = TextSecondary, fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
+                        )
                     }
                 }
 

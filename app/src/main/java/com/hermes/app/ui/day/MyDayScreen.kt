@@ -363,14 +363,14 @@ fun CreateTaskDialog(
     var endHour by remember { mutableIntStateOf(9) }
     var endMinute by remember { mutableIntStateOf(30) }
 
-    // Sección Repetición
-    var selectedDays by remember { mutableStateOf(setOf<Int>()) }
+var selectedDays by remember { mutableStateOf(setOf<Int>()) }
     var numWeeks by remember { mutableIntStateOf(1) }
 
     var showDatePickerInDialog by remember { mutableStateOf(false) }
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
-    val daysOfWeekList = listOf(
+    var daysOfWeekList = listOf(
         Calendar.MONDAY to "L", Calendar.TUESDAY to "M", Calendar.WEDNESDAY to "X",
         Calendar.THURSDAY to "J", Calendar.FRIDAY to "V", Calendar.SATURDAY to "S",
         Calendar.SUNDAY to "D"
@@ -393,69 +393,242 @@ fun CreateTaskDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
-        title = { Text("Nueva Tarea", color = NeonCyan, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) },
+        title = {
+            Column {
+                Text("Nueva Tarea", color = NeonCyan, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = SurfaceDark,
+                    contentColor = NeonCyan
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text("1. Tarea", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        icon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text("2. Horario", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        icon = { Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                    Tab(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        text = { Text("3. Avisos", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        icon = { Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                }
+            }
+        },
         text = {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // SECCIÓN 1: ¿QUÉ VAS A HACER?
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SectionLabel("¿QUÉ VAS A HACER?")
-                        OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            placeholder = { Text("Ej: Ir al gimnasio") },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
-                        )
-                        OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
-                            placeholder = { Text("Notas / Descripción (opcional)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 1,
-                            maxLines = 3,
-                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
-                        )
-                        
-                        val durationText = remember(duration) {
-                            val h = duration / 60
-                            val m = duration % 60
-                            when {
-                                h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
-                                h > 0 -> "${h}h ($duration min)"
-                                else -> "${m}m"
+            Box(modifier = Modifier.fillMaxWidth()) {
+                when (selectedTab) {
+                    0 -> {
+                        // PESTAÑA 1: DATOS DE LA TAREA
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionLabel("DATOS GENERALES")
+                            OutlinedTextField(
+                                value = title,
+                                onValueChange = { title = it },
+                                placeholder = { Text("Ej: Ir al gimnasio") },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
+                            )
+                            OutlinedTextField(
+                                value = description,
+                                onValueChange = { description = it },
+                                placeholder = { Text("Notas / Descripción (opcional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 1,
+                                maxLines = 3,
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
+                            )
+                            
+                            val durationText = remember(duration) {
+                                val h = duration / 60
+                                val m = duration % 60
+                                when {
+                                    h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
+                                    h > 0 -> "${h}h ($duration min)"
+                                    else -> "${m}m"
+                                }
+                            }
+
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    Text(durationText, style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                                }
+
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    items(listOf(
+                                        15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
+                                        120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
+                                    )) { (mins, label) ->
+                                        val selected = duration == mins
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable {
+                                                    duration = mins
+                                                    if (isFixed) updateEndHourFromDuration()
+                                                }
+                                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                color = if (selected) Color.Black else TextPrimary,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+
+                                OutlinedTextField(
+                                    value = duration.toString(),
+                                    onValueChange = { input ->
+                                        val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                                        duration = valMins
+                                        if (isFixed) updateEndHourFromDuration()
+                                    },
+                                    label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonMagenta)
+                                )
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Prioridad:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                listOf(1 to "Baja", 2 to "Media", 3 to "Alta").forEach { (p, label) ->
+                                    FilterChip(
+                                        selected = priority == p,
+                                        onClick = { priority = p },
+                                        label = { Text(label, fontSize = 10.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }.copy(alpha = 0.2f),
+                                            selectedLabelColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }
+                                        )
+                                    )
+                                }
                             }
                         }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                Text(durationText, style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                    }
+                    1 -> {
+                        // PESTAÑA 2: HORARIO Y FECHA
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionLabel("CONFIGURACIÓN DE FECHA")
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Delegar día a Hermes", color = TextPrimary)
+                                Switch(checked = letHermesChooseDate, onCheckedChange = { letHermesChooseDate = it; if(it) isFixed = false }, colors = SwitchDefaults.colors(checkedTrackColor = NeonCyan))
                             }
 
+                            if (!letHermesChooseDate) {
+                                OutlinedButton(
+                                    onClick = { showDatePickerInDialog = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
+                                ) {
+                                    Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(taskDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
+                                }
+                                
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Lock, contentDescription = null, tint = if(isFixed) NeonAmber else TextSecondary, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Fijar hora exacta", color = if(isFixed) NeonAmber else TextPrimary)
+                                    }
+                                    Switch(checked = isFixed, onCheckedChange = { isFixed = it }, colors = SwitchDefaults.colors(checkedTrackColor = NeonAmber))
+                                }
+
+                                if (isFixed) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Incluir hora de fin", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                        Checkbox(checked = hasEndTime, onCheckedChange = { hasEndTime = it }, colors = CheckboxDefaults.colors(checkedColor = NeonMagenta))
+                                    }
+
+                                    var showStartT by remember { mutableStateOf(false) }
+                                    var showEndT by remember { mutableStateOf(false) }
+                                    val sState = rememberTimePickerState(hour, minute, true)
+                                    val eState = rememberTimePickerState(endHour, endMinute, true)
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Inicio", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                                            OutlinedButton(onClick = { showStartT = true }, modifier = Modifier.fillMaxWidth()) {
+                                                Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
+                                            }
+                                        }
+                                        if (hasEndTime) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Fin", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                                                OutlinedButton(onClick = { showEndT = true }, modifier = Modifier.fillMaxWidth()) {
+                                                    Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}")
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
+                                    if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("Disponible a partir del día", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    OutlinedButton(
+                                        onClick = { showAvailableFromDatePicker = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
+                                    ) {
+                                        Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(availableFromDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
+                                    }
+
+                                    Text("Fecha límite (opcional)", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    OutlinedButton(
+                                        onClick = { showDeadlinePicker = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, NeonMagenta.copy(alpha = 0.3f))
+                                    ) {
+                                        val dStr = deadlineDate?.let { SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(it.time) } ?: "Sin límite (máx 14 días)"
+                                        Text(dStr, color = if(deadlineDate != null) TextPrimary else TextSecondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    2 -> {
+                        // PESTAÑA 3: AVISOS Y REPETICIÓN
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionLabel("NOTIFICACIÓN Y AVISO")
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(listOf(
-                                    15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
-                                    120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
+                                    0 to "En el momento (0m)", 5 to "5m", 15 to "15m", 30 to "30m",
+                                    60 to "1h", 120 to "2h", 1440 to "1 día"
                                 )) { (mins, label) ->
-                                    val selected = duration == mins
+                                    val selected = reminderLeadMinutes == mins
                                     Box(
                                         modifier = Modifier
                                             .background(
-                                                color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                                color = if (selected) NeonCyan else SurfaceVariantDark,
                                                 shape = RoundedCornerShape(8.dp)
                                             )
-                                            .clickable {
-                                                duration = mins
-                                                if (isFixed) updateEndHourFromDuration()
-                                            }
+                                            .clickable { reminderLeadMinutes = mins }
                                             .padding(horizontal = 10.dp, vertical = 6.dp)
                                     ) {
                                         Text(
@@ -469,168 +642,22 @@ fun CreateTaskDialog(
                             }
 
                             OutlinedTextField(
-                                value = duration.toString(),
+                                value = reminderLeadMinutes.toString(),
                                 onValueChange = { input ->
-                                    val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
-                                    duration = valMins
-                                    if (isFixed) updateEndHourFromDuration()
+                                    val m = input.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                                    reminderLeadMinutes = m
                                 },
-                                label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                                label = { Text("Antelación personalizada (min)", color = TextSecondary, fontSize = 11.sp) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonMagenta)
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
                             )
-                        }
 
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Prioridad:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            listOf(1 to "Baja", 2 to "Media", 3 to "Alta").forEach { (p, label) ->
-                                FilterChip(
-                                    selected = priority == p,
-                                    onClick = { priority = p },
-                                    label = { Text(label, fontSize = 10.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }.copy(alpha = 0.2f),
-                                        selectedLabelColor = when(p) { 3 -> NeonRed; 2 -> NeonAmber; else -> NeonGreen }
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
+                            Divider(color = SurfaceVariantDark)
 
-                item { Divider(color = SurfaceVariantDark) }
-
-                // SECCIÓN 2: ¿CUÁNDO?
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionLabel("¿CUÁNDO?")
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Delegar día a Hermes", color = TextPrimary)
-                            Switch(checked = letHermesChooseDate, onCheckedChange = { letHermesChooseDate = it; if(it) isFixed = false }, colors = SwitchDefaults.colors(checkedTrackColor = NeonCyan))
-                        }
-
-                        if (!letHermesChooseDate) {
-                            OutlinedButton(
-                                onClick = { showDatePickerInDialog = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
-                            ) {
-                                Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(taskDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
-                            }
-                            
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Lock, contentDescription = null, tint = if(isFixed) NeonAmber else TextSecondary, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Fijar hora exacta", color = if(isFixed) NeonAmber else TextPrimary)
-                                }
-                                Switch(checked = isFixed, onCheckedChange = { isFixed = it }, colors = SwitchDefaults.colors(checkedTrackColor = NeonAmber))
-                            }
-
-                            if (isFixed) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Incluir hora de fin", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
-                                    Checkbox(checked = hasEndTime, onCheckedChange = { hasEndTime = it }, colors = CheckboxDefaults.colors(checkedColor = NeonMagenta))
-                                }
-
-                                var showStartT by remember { mutableStateOf(false) }
-                                var showEndT by remember { mutableStateOf(false) }
-                                val sState = rememberTimePickerState(hour, minute, true)
-                                val eState = rememberTimePickerState(endHour, endMinute, true)
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text("Inicio", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
-                                        OutlinedButton(onClick = { showStartT = true }, modifier = Modifier.fillMaxWidth()) {
-                                            Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
-                                        }
-                                    }
-                                    if (hasEndTime) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Fin", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.padding(bottom = 4.dp))
-                                            OutlinedButton(onClick = { showEndT = true }, modifier = Modifier.fillMaxWidth()) {
-                                                Text("${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}")
-                                            }
-                                        }
-                                    }
-                                }
-                                if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
-                                if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
-                            }
-                        } else {
-                            // Hermes elige: fecha disponible desde y hasta (deadline)
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Disponible a partir del día", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                OutlinedButton(
-                                    onClick = { showAvailableFromDatePicker = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.5f))
-                                ) {
-                                    Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES")).format(availableFromDate.time).replaceFirstChar { it.uppercase() }, color = TextPrimary)
-                                }
-
-                                Text("Fecha límite (opcional)", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                OutlinedButton(
-                                    onClick = { showDeadlinePicker = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonMagenta.copy(alpha = 0.3f))
-                                ) {
-                                    val dStr = deadlineDate?.let { SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(it.time) } ?: "Sin límite (máx 14 días)"
-                                    Text(dStr, color = if(deadlineDate != null) TextPrimary else TextSecondary)
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-                        SectionLabel("NOTIFICACIÓN Y AVISO")
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(listOf(
-                                0 to "Sin aviso", 5 to "5m", 15 to "15m", 30 to "30m",
-                                60 to "1h", 120 to "2h", 1440 to "1 día"
-                            )) { (mins, label) ->
-                                val selected = reminderLeadMinutes == mins
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            color = if (selected) NeonCyan else SurfaceVariantDark,
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        .clickable { reminderLeadMinutes = mins }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text(
-                                        text = label,
-                                        color = if (selected) Color.Black else TextPrimary,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item { Divider(color = SurfaceVariantDark) }
-
-                // SECCIÓN 3: REPETICIÓN
-                item {
-                    var showRepetition by remember { mutableStateOf(false) }
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showRepetition = !showRepetition }) {
                             SectionLabel("OPCIONES DE REPETICIÓN")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(if(showRepetition) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                        }
-                        
-                        AnimatedVisibility(visible = showRepetition) {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     daysOfWeekList.forEach { (code, label) ->
                                         val isSelected = code in selectedDays
@@ -657,57 +684,65 @@ fun CreateTaskDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val finalStart: Long?
-                    val finalEnd: Long?
-                    if (!letHermesChooseDate && isFixed) {
-                        val cal = taskDate.clone() as Calendar
-                        cal.set(Calendar.HOUR_OF_DAY, hour)
-                        cal.set(Calendar.MINUTE, minute)
-                        finalStart = cal.timeInMillis
-                        finalEnd = if (hasEndTime) {
-                            val endCal = taskDate.clone() as Calendar
-                            endCal.set(Calendar.HOUR_OF_DAY, endHour)
-                            endCal.set(Calendar.MINUTE, endMinute)
-                            if (endCal.before(cal)) endCal.add(Calendar.DAY_OF_YEAR, 1)
-                            endCal.timeInMillis
+            if (selectedTab < 2) {
+                Button(
+                    onClick = { selectedTab++ },
+                    enabled = selectedTab != 0 || title.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                ) {
+                    Text(if (selectedTab == 0) "Siguiente: Horario ->" else "Siguiente: Avisos ->", color = Color.Black)
+                }
+            } else {
+                Button(
+                    onClick = {
+                        val finalStart: Long?
+                        val finalEnd: Long?
+                        if (!letHermesChooseDate && isFixed) {
+                            val cal = taskDate.clone() as Calendar
+                            cal.set(Calendar.HOUR_OF_DAY, hour)
+                            cal.set(Calendar.MINUTE, minute)
+                            finalStart = cal.timeInMillis
+                            finalEnd = if (hasEndTime) {
+                                val endCal = taskDate.clone() as Calendar
+                                endCal.set(Calendar.HOUR_OF_DAY, endHour)
+                                endCal.set(Calendar.MINUTE, endMinute)
+                                if (endCal.before(cal)) endCal.add(Calendar.DAY_OF_YEAR, 1)
+                                endCal.timeInMillis
+                            } else {
+                                null
+                            }
+                        } else if (!letHermesChooseDate) {
+                            val cal = taskDate.clone() as Calendar
+                            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
+                            finalStart = cal.timeInMillis
+                            finalEnd = null
                         } else {
-                            null
+                            val cal = availableFromDate.clone() as Calendar
+                            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+                            finalStart = cal.timeInMillis
+                            finalEnd = null
                         }
-                    } else if (!letHermesChooseDate) {
-                        // Fecha concreta pero flexible (sin hora fija)
-                        val cal = taskDate.clone() as Calendar
-                        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
-                        finalStart = cal.timeInMillis // Se marcará como flexible el motor buscará este día
-                        finalEnd = null
-                    } else {
-                        // Hermes elige el día a partir de la fecha disponible seleccionada
-                        val cal = availableFromDate.clone() as Calendar
-                        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
-                        finalStart = cal.timeInMillis
-                        finalEnd = null
-                    }
 
-                    onSave(
-                        TaskEntity(
-                            title = title,
-                            description = description.ifBlank { null },
-                            durationMinutes = duration,
-                            reminderLeadMinutes = reminderLeadMinutes,
-                            priority = priority,
-                            isFixed = isFixed && !letHermesChooseDate,
-                            scheduledStart = finalStart,
-                            scheduledEnd = finalEnd,
-                            deadline = deadlineDate?.timeInMillis
-                        ),
-                        selectedDays,
-                        numWeeks
-                    )
-                },
-                enabled = title.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
-            ) { Text("Guardar", color = Color.Black) }
+                        onSave(
+                            TaskEntity(
+                                title = title,
+                                description = description.ifBlank { null },
+                                durationMinutes = duration,
+                                reminderLeadMinutes = reminderLeadMinutes,
+                                priority = priority,
+                                isFixed = isFixed && !letHermesChooseDate,
+                                scheduledStart = finalStart,
+                                scheduledEnd = finalEnd,
+                                deadline = deadlineDate?.timeInMillis
+                            ),
+                            selectedDays,
+                            numWeeks
+                        )
+                    },
+                    enabled = title.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                ) { Text("Guardar Tarea", color = Color.Black) }
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
