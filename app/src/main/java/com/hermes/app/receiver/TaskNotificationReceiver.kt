@@ -150,7 +150,7 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                 // Usar el mensaje pre-generado por la IA o generarlo ahora mismo
                 var message = task?.preGeneratedMessage
 
-                if (message == null) {
+                if (message.isNullOrBlank()) {
                     try {
                         val geminiService = GeminiRoleService()
                         message = geminiService.generateAdvanceNotification(
@@ -165,11 +165,12 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        message = "${activeRole.displayName}: Recuerda '$taskTitle' (${duration} min)."
+                        val leadText = if (leadMinutes > 0) "en $leadMinutes min" else "ahora"
+                        message = "[${activeRole.displayName}] ${activeRole.customPhrase} '$taskTitle' $leadText."
                     }
                 }
 
-                val titleText = if (leadMinutes > 0) "$taskTitle (en $leadMinutes min)" else "$taskTitle (Empieza ahora)"
+                val titleText = "🎭 ${activeRole.displayName} • $taskTitle"
 
                 // Acción Completar
                 val completeIntent = Intent(context, TaskNotificationReceiver::class.java).apply {

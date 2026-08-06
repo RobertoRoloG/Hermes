@@ -62,16 +62,19 @@ class GeminiRoleService {
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it))
         } ?: "próximamente"
 
-        val roleFallback = when (role.id) {
-            "STRICT_COACH" -> "🏋️‍♂️ [Entrenador] ¡A trabajar! Tarea agendada: '${task.title}' para las $timeStr. ¡Sin excusas!"
-            "FORMAL_SECRETARY" -> "💼 [Secretario] Le confirmo que la tarea '${task.title}' ha sido programada a las $timeStr."
-            "CASUAL_FRIEND" -> "✌️ [Amigo] ¡Listo bro! Nos vemos a las $timeStr con '${task.title}'."
-            else -> "[${role.displayName}] ${role.customPhrase} '${task.title}' a las $timeStr"
+        val roleFallback = when {
+            role.id == "STRICT_COACH" || role.displayName.contains("Entrenador", ignoreCase = true) -> 
+                "🏋️‍♂️ [Entrenador] ¡A trabajar! Tarea agendada: '${task.title}' para las $timeStr. ¡Sin excusas!"
+            role.id == "FORMAL_SECRETARY" || role.displayName.contains("Secretario", ignoreCase = true) -> 
+                "💼 [Secretario] Le confirmo que la tarea '${task.title}' ha sido programada a las $timeStr."
+            role.id == "CASUAL_FRIEND" || role.displayName.contains("Amigo", ignoreCase = true) -> 
+                "✌️ [Amigo] ¡Listo bro! Nos vemos a las $timeStr con '${task.title}'."
+            else -> "🤖 [${role.displayName}] ${role.customPhrase} '${task.title}' a las $timeStr"
         }
 
         val prompt = """
             Eres un asistente personal con la personalidad y rol exclusivo de '${role.displayName}'.
-            Descripción del rol: ${role.description}.
+            Descripción del rol: ${role.description}. Frase característica: "${role.customPhrase}".
             Tarea creada: "${task.title}", programada a las $timeStr (${task.durationMinutes} min).
             Genera una sola frase corta, directa y muy expresiva en primera persona adaptada estrictamente a tu personalidad. No incluyas comillas ni explicaciones adicionales.
         """.trimIndent()
@@ -90,18 +93,22 @@ class GeminiRoleService {
         durationMinutes: Int
     ): String = withContext(Dispatchers.IO) {
         val timeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(scheduledStartMs))
+        val leadText = if (leadMinutes > 0) "en $leadMinutes min ($timeStr)" else "a las $timeStr"
 
-        val fallback = when (role.id) {
-            "STRICT_COACH" -> "🏋️‍♂️ [Entrenador] Faltan $leadMinutes min para '$taskTitle'. ¡Prepárate ya!"
-            "FORMAL_SECRETARY" -> "💼 [Secretario] Le recordamos que su compromiso '$taskTitle' inicia a las $timeStr (en $leadMinutes min)."
-            "CASUAL_FRIEND" -> "✌️ [Amigo] Ey, en $leadMinutes min toca '$taskTitle'. ¡No te despistes!"
-            else -> "${role.displayName}: Recuerda '$taskTitle' a las $timeStr"
+        val fallback = when {
+            role.id == "STRICT_COACH" || role.displayName.contains("Entrenador", ignoreCase = true) -> 
+                "🏋️‍♂️ [Entrenador] Faltan $leadMinutes min para '$taskTitle'. ¡Prepárate ya!"
+            role.id == "FORMAL_SECRETARY" || role.displayName.contains("Secretario", ignoreCase = true) -> 
+                "💼 [Secretario] Le recordamos que su compromiso '$taskTitle' inicia $leadText."
+            role.id == "CASUAL_FRIEND" || role.displayName.contains("Amigo", ignoreCase = true) -> 
+                "✌️ [Amigo] Ey, $leadText toca '$taskTitle'. ¡No te despistes!"
+            else -> "🤖 [${role.displayName}] ${role.customPhrase} '$taskTitle' $leadText"
         }
 
         val leadStr = if (leadMinutes > 0) "Quedan $leadMinutes minutos para empezar" else "Empieza ahora mismo"
 
         val prompt = """
-            Eres el asistente '${role.displayName}' con personalidad: ${role.description}.
+            Eres el asistente '${role.displayName}' con personalidad: ${role.description}. Frase: "${role.customPhrase}".
             Aviso de notificación: $leadStr "$taskTitle" (a las $timeStr, duración: $durationMinutes min).
             Genera una sola frase urgente, corta e impactante según tu personalidad. No uses comillas.
         """.trimIndent()
