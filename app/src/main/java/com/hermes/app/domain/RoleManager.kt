@@ -209,6 +209,18 @@ class RoleManager(context: Context) {
         return geminiRoleService.generateRoleNotification(assignedRole, task)
     }
 
+    suspend fun generateAdvanceNotificationForTask(task: TaskEntity): String {
+        val assignedRole = getRoleByDisplayName(task.createdRole)
+        val startMs = task.scheduledStart ?: System.currentTimeMillis()
+        return geminiRoleService.generateAdvanceNotification(
+            role = assignedRole,
+            taskTitle = task.title,
+            scheduledStartMs = startMs,
+            leadMinutes = task.reminderLeadMinutes,
+            durationMinutes = task.durationMinutes
+        )
+    }
+
     /**
      * Usa a Gemini para obtener el orden ideal de ejecución de un grupo de tareas.
      */

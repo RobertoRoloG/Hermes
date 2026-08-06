@@ -14,26 +14,47 @@ import java.util.Locale
 class GeminiRoleService {
 
     // --- CONFIGURACIÓN DEL MODELO ---
-    // Usamos el modelo estable más potente de la lista de 2026
-    private val MODEL_NAME = "gemini-3.6-flash" 
+    private val MODEL_NAME = "gemini-2.5-flash"
+    private val FALLBACK_MODEL_NAME = "gemini-1.5-flash"
     
     private val apiKey: String = BuildConfig.GEMINI_API_KEY
         .replace("\"", "")
         .replace("'", "")
         .trim()
 
-    private val generativeModel: GenerativeModel? by lazy {
+    private fun getModel(modelName: String = MODEL_NAME): GenerativeModel? {
         val finalKey = apiKey
-        if (finalKey.isNotBlank() && finalKey.length > 10) {
-            Log.d("GeminiRoleService", "Iniciando motor IA. Modelo: $MODEL_NAME | Clave: ${finalKey.take(4)}...")
+        return if (finalKey.isNotBlank() && finalKey.length > 10) {
             GenerativeModel(
-                modelName = MODEL_NAME,
+                modelName = modelName,
                 apiKey = finalKey
             )
         } else {
             Log.e("GeminiRoleService", "API Key no válida. Asegúrate de que empiece por 'AIza' en local.properties")
             null
         }
+    }
+
+    private suspend fun generateContentWithFallback(prompt: String): String? {
+        val primaryModel = getModel(MODEL_NAME)
+        if (primaryModel != null) {
+            try {
+                val res = primaryModel.generateContent(prompt).text?.trim()
+                if (!res.isNullOrEmpty()) return res
+            } catch (e: Exception) {
+                Log.w("GeminiRoleService", "Error con modelo $MODEL_NAME: ${e.message}. Probando $FALLBACK_MODEL_NAME...")
+            }
+        }
+        val fallbackModel = getModel(FALLBACK_MODEL_NAME)
+        if (fallbackModel != null) {
+            try {
+                val res = fallbackModel.generateContent(prompt).text?.trim()
+                if (!res.isNullOrEmpty()) return res
+            } catch (e: Exception) {
+                Log.e("GeminiRoleService", "Error con modelo fallback $FALLBACK_MODEL_NAME: ${e.message}", e)
+            }
+        }
+        return null
     }
 
     /**
@@ -52,28 +73,14 @@ class GeminiRoleService {
             else -> "[${role.displayName}] ${role.customPhrase} '${task.title}' a las $timeStr"
         }
 
-        val model = generativeModel ?: return@withContext roleFallback
-
         val prompt = """
-            Eres un asistente personal con el rol exclusivo de '${role.displayName}'.
-            Personalidad: ${role.description}.
+            Eres un asistente personal con la personalidad y rol exclusivo de '${role.displayName}'.
+            Descripción del rol: ${role.description}.
             Tarea creada: "${task.title}", programada a las $timeStr (${task.durationMinutes} min).
-            Genera una sola frase directa y muy expresiva en primera persona adaptada estrictamente a tu personalidad. No incluyas comillas ni explicaciones adicionales.
+            Genera una sola frase corta, directa y muy expresiva en primera persona adaptada estrictamente a tu personalidad. No incluyas comillas ni explicaciones adicionales.
         """.trimIndent()
 
-        try {
-            val response = model.generateContent(prompt)
-            val generatedText = response.text?.trim()
-            if (!generatedText.isNullOrEmpty()) {
-                Log.d("GeminiRoleService", "Respuesta IA Gemini recibida con éxito: $generatedText")
-                generatedText
-            } else {
-                roleFallback
-            }
-        } catch (e: Exception) {
-            Log.e("GeminiRoleService", "Error al consultar la API de Gemini: ${e.message}", e)
-            roleFallback
-        }
+        generateContentWithFallback(prompt) ?: roleFallback
     }
 
     /**
@@ -95,27 +102,15 @@ class GeminiRoleService {
             else -> "${role.displayName}: Recuerda '$taskTitle' a las $timeStr"
         }
 
-        val model = generativeModel ?: return@withContext fallback
+        val leadStr = if (leadMinutes > 0) "Quedan $leadMinutes minutos para empezar" else "Empieza ahora mismo"
 
         val prompt = """
             Eres el asistente '${role.displayName}' con personalidad: ${role.description}.
-            Aviso de pre-alerta: Quedan $leadMinutes minutos para empezar "$taskTitle" (a las $timeStr, duración: $durationMinutes min).
+            Aviso de notificación: $leadStr "$taskTitle" (a las $timeStr, duración: $durationMinutes min).
             Genera una sola frase urgente, corta e impactante según tu personalidad. No uses comillas.
         """.trimIndent()
 
-        try {
-            val response = model.generateContent(prompt)
-            val text = response.text?.trim()
-            if (!text.isNullOrEmpty()) {
-                Log.d("GeminiRoleService", "Pre-alerta IA Gemini recibida con éxito: $text")
-                text
-            } else {
-                fallback
-            }
-        } catch (e: Exception) {
-            Log.e("GeminiRoleService", "Error al consultar pre-alerta en la API de Gemini: ${e.message}", e)
-            fallback
-        }
+        generateContentWithFallback(prompt) ?: fallback
     }
 
     /**
@@ -124,7 +119,6 @@ class GeminiRoleService {
      */
     suspend fun rankTasksPriority(tasks: List<TaskEntity>): List<Long> = withContext(Dispatchers.IO) {
         if (tasks.isEmpty()) return@withContext emptyList()
-        val model = generativeModel ?: return@withContext tasks.map { it.id }
 
         val taskListStr = tasks.joinToString("\n") { "- ID:${it.id}: ${it.title} (${it.durationMinutes} min)" }
 
@@ -138,8 +132,7 @@ class GeminiRoleService {
         """.trimIndent()
 
         try {
-            val response = model.generateContent(prompt)
-            val rawText = response.text?.trim() ?: ""
+            val rawText = generateContentWithFallback(prompt) ?: ""
             val cleanText = rawText
                 .replace("```json", "")
                 .replace("```", "")

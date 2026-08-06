@@ -74,6 +74,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
             if (savedTask.scheduledStart != null) {
                 NotificationScheduler.scheduleTaskNotification(context, savedTask)
+                try {
+                    val preMsg = roleManager.generateAdvanceNotificationForTask(savedTask)
+                    database.taskDao().updatePreGeneratedMessage(insertedId, preMsg)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
             val aiResponse = roleManager.generateDynamicNotificationMessage(savedTask)
@@ -179,6 +185,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 NotificationScheduler.cancelTaskNotification(context, task.id)
             } else if (task.scheduledStart != null) {
                 NotificationScheduler.scheduleTaskNotification(context, task)
+                try {
+                    val preMsg = roleManager.generateAdvanceNotificationForTask(task)
+                    database.taskDao().updatePreGeneratedMessage(task.id, preMsg)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             } else {
                 NotificationScheduler.cancelTaskNotification(context, task.id)
             }
