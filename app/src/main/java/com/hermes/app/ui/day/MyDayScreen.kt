@@ -552,7 +552,7 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                                         duration = valMins
                                         if (isFixed) updateEndHourFromDuration()
                                     },
-                                    label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                                    label = { Text("Duración en minutos (ej. 30, 90, 120)", color = TextSecondary, fontSize = 11.sp) },
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
@@ -633,7 +633,7 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                                             }
                                         }
                                     }
-                                    if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
+                                    if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; if (hasEndTime) updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
                                     if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
                                 }
                             } else {

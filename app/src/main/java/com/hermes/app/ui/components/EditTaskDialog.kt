@@ -136,7 +136,7 @@ fun EditTaskDialog(
 
                         if (showStart) {
                             TimePickerDialog(onDismissRequest = { showStart = false }, confirmButton = {
-                                TextButton(onClick = { hour = startState.hour; minute = startState.minute; updateDurationFromHours(); showStart = false }) { Text("OK") }
+                                TextButton(onClick = { hour = startState.hour; minute = startState.minute; if (hasEndTime) updateDurationFromHours(); showStart = false }) { Text("OK") }
                             }) { TimePicker(startState) }
                         }
                         if (showEnd) {
@@ -148,16 +148,6 @@ fun EditTaskDialog(
                 }
 
                 item {
-                    val durationText = remember(duration) {
-                        val h = duration / 60
-                        val m = duration % 60
-                        when {
-                            h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
-                            h > 0 -> "${h}h ($duration min)"
-                            else -> "${m}m"
-                        }
-                    }
-
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -165,7 +155,7 @@ fun EditTaskDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            Text(durationText, style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                            Text("${duration}m", style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
                         }
 
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -182,6 +172,7 @@ fun EditTaskDialog(
                                         )
                                         .clickable {
                                             duration = mins
+                                            if (isFixed && hasEndTime) updateDurationFromHours()
                                         }
                                         .padding(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
@@ -201,7 +192,7 @@ fun EditTaskDialog(
                                 val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
                                 duration = valMins
                             },
-                            label = { Text("Minutos libres (ej. 90, 600, 1440)", color = TextSecondary, fontSize = 11.sp) },
+                            label = { Text("Duración en minutos (ej. 30, 90, 120)", color = TextSecondary, fontSize = 11.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
