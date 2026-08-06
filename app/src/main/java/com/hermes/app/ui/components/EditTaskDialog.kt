@@ -1,5 +1,7 @@
 package com.hermes.app.ui.components
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,6 +33,7 @@ fun EditTaskDialog(
     onDismiss: () -> Unit,
     onSave: (TaskEntity) -> Unit
 ) {
+    val context = LocalContext.current
     var title by remember { mutableStateOf(task.title) }
     var description by remember { mutableStateOf(task.description ?: "") }
     var priority by remember { mutableIntStateOf(task.priority) }
@@ -274,6 +277,23 @@ fun EditTaskDialog(
                     null
                 }
 
+                val finalStart = if (isFixed) cal.timeInMillis else task.scheduledStart
+                if (finalStart != null && reminderLeadMinutes > 0) {
+                    val leadMs = reminderLeadMinutes * 60 * 1000L
+                    val triggerMs = finalStart - leadMs
+                    val now = System.currentTimeMillis()
+                    if (triggerMs < now) {
+                        val minsUntilStart = ((finalStart - now) / (60 * 1000L)).coerceAtLeast(0).toInt()
+                        val errorMsg = if (minsUntilStart <= 0) {
+                            "⚠️ La antelación de $reminderLeadMinutes min ya ha pasado. Usa 'En el momento (0m)'."
+                        } else {
+                            "⚠️ La antelación de $reminderLeadMinutes min queda en el pasado (la tarea empieza en $minsUntilStart min)."
+                        }
+                        Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+                }
+
                 onSave(task.copy(
                     title = title,
                     description = description.ifBlank { null },
@@ -281,7 +301,7 @@ fun EditTaskDialog(
                     reminderLeadMinutes = reminderLeadMinutes,
                     priority = priority,
                     isFixed = isFixed,
-                    scheduledStart = if (isFixed) cal.timeInMillis else task.scheduledStart,
+                    scheduledStart = finalStart,
                     scheduledEnd = finalEnd
                 ))
             }) { Text("Guardar") }
