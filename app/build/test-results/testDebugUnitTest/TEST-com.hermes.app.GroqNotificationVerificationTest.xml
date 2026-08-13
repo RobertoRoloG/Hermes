@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.hermes.app.GroqNotificationVerificationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-13T08:21:03.744Z" hostname="DESKTOP-AQT8730" time="1.112">
+  <properties/>
+  <testcase name="testGroqRoleServiceAdvanceNotification" classname="com.hermes.app.GroqNotificationVerificationTest" time="0.887"/>
+  <testcase name="testGroqTaskPriorityRanking" classname="com.hermes.app.GroqNotificationVerificationTest" time="0.208"/>
+  <testcase name="testRoleFallbackFormatting" classname="com.hermes.app.GroqNotificationVerificationTest" time="0.008"/>
+  <system-out><![CDATA[Resultado de Groq: Estoy listo para exigirte el máximo esfuerzo en este entrenamiento de cardio a las 10:36.
+Ranking de Groq: [3, 1, 2]
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

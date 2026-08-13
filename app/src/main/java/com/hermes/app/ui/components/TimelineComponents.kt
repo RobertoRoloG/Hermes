@@ -1,5 +1,6 @@
 package com.hermes.app.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -61,6 +62,7 @@ fun InteractiveTimelineCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize()
             .clickable { isExpanded = !isExpanded }
             .border(
                 1.dp,
@@ -197,8 +199,9 @@ fun InteractiveTimelineCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val durText = task.durationMinutes?.let { "${it}m" } ?: "No especificada"
                     Text(
-                        text = "Duración: ${task.durationMinutes}m | Rol: ${task.createdRole}",
+                        text = "Duración: $durText | Rol: ${task.createdRole}",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )

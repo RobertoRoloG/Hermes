@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Hermes" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/purple_700</item>
+        <item name="android:statusBarColor">#0B0E14</item>
+    </style>
+
+    <style name="Theme.Hermes.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0B0E14</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Hermes</item>
     </style>
 </resources>

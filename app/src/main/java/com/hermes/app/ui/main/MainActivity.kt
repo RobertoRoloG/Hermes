@@ -41,6 +41,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.*
+
 class MainActivity : ComponentActivity() {
 
     private lateinit var database: HermesDatabase
@@ -49,6 +52,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
         database = HermesDatabase.getDatabase(this)
@@ -164,21 +168,30 @@ class MainActivity : ComponentActivity() {
                             state = pagerState,
                             modifier = Modifier.fillMaxSize()
                         ) { page ->
-                            when (page) {
-                                0 -> MyDayScreen(
-                                    viewModel = taskViewModel
-                                )
-                                1 -> StatisticsScreen(
-                                    tasks = tasks,
-                                    roleManager = roleManager
-                                )
-                                2 -> AssistantRoleScreen(
-                                    roleManager = roleManager,
-                                    onUpdateAssistantName = { newName ->
-                                        roleManager.setAssistantName(newName)
-                                        ShortcutHelper.updateAssistantDynamicShortcut(this@MainActivity, newName)
-                                    }
-                                )
+                            AnimatedContent(
+                                targetState = page,
+                                transitionSpec = {
+                                    (fadeIn() + slideInHorizontally { width -> if (targetState > initialState) width / 4 else -width / 4 }) togetherWith
+                                    (fadeOut() + slideOutHorizontally { width -> if (targetState > initialState) -width / 4 else width / 4 })
+                                },
+                                label = "ScreenTransition"
+                            ) { targetPage ->
+                                when (targetPage) {
+                                    0 -> MyDayScreen(
+                                        viewModel = taskViewModel
+                                    )
+                                    1 -> StatisticsScreen(
+                                        tasks = tasks,
+                                        roleManager = roleManager
+                                    )
+                                    2 -> AssistantRoleScreen(
+                                        roleManager = roleManager,
+                                        onUpdateAssistantName = { newName ->
+                                            roleManager.setAssistantName(newName)
+                                            ShortcutHelper.updateAssistantDynamicShortcut(this@MainActivity, newName)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

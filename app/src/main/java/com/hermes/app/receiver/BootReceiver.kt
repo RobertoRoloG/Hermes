@@ -28,7 +28,7 @@ class BootReceiver : BroadcastReceiver() {
                     var rescheduledCount = 0
                     val now = System.currentTimeMillis()
                     for (task in scheduledTasks) {
-                        val endMs = task.scheduledEnd ?: ((task.scheduledStart ?: 0L) + task.durationMinutes * 60 * 1000L)
+                        val endMs = task.scheduledEnd ?: ((task.scheduledStart ?: 0L) + (task.durationMinutes ?: 30) * 60 * 1000L)
                         if (endMs > now) {
                             NotificationScheduler.scheduleTaskNotification(context, task)
                             rescheduledCount++

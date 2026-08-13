@@ -20,8 +20,11 @@ interface TaskDao {
 
     @Query("""
         SELECT * FROM tasks 
-        WHERE (scheduledStart <= :endOfDay AND (scheduledEnd >= :startOfDay OR scheduledEnd IS NULL)) 
-           OR (scheduledStart IS NULL AND createdAt >= :startOfDay AND createdAt <= :endOfDay)
+        WHERE (
+            (scheduledStart IS NOT NULL AND scheduledEnd IS NOT NULL AND scheduledStart <= :endOfDay AND scheduledEnd >= :startOfDay)
+            OR (scheduledStart IS NOT NULL AND scheduledEnd IS NULL AND scheduledStart >= :startOfDay AND scheduledStart <= :endOfDay)
+        ) 
+        OR (scheduledStart IS NULL AND createdAt >= :startOfDay AND createdAt <= :endOfDay)
         ORDER BY isCompleted ASC, scheduledStart ASC, priority DESC
     """)
     fun getTasksForDateRange(startOfDay: Long, endOfDay: Long): Flow<List<TaskEntity>>

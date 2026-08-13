@@ -37,7 +37,7 @@ fun EditTaskDialog(
     var title by remember { mutableStateOf(task.title) }
     var description by remember { mutableStateOf(task.description ?: "") }
     var priority by remember { mutableIntStateOf(task.priority) }
-    var duration by remember { mutableIntStateOf(task.durationMinutes) }
+    var duration by remember { mutableStateOf<Int?>(task.durationMinutes) }
     var reminderLeadMinutes by remember { mutableIntStateOf(task.reminderLeadMinutes) }
     
     var isFixed by remember { mutableStateOf(task.isFixed) }
@@ -51,7 +51,7 @@ fun EditTaskDialog(
         }
     }
     var hour by remember { mutableIntStateOf(initialCal.get(Calendar.HOUR_OF_DAY)) }
-    var minute by remember { mutableIntStateOf(initialCal.get(Calendar.MINUTE)) }
+    var minute by remember { mutableIntStateOf(initialCal.get(Calendar.MINUTE).coerceIn(0, 59)) }
     
     var endHour by remember { mutableIntStateOf(0) }
     var endMinute by remember { mutableIntStateOf(0) }
@@ -59,7 +59,7 @@ fun EditTaskDialog(
     // Inicializar hora de fin
     LaunchedEffect(hour, minute, duration) {
         val totalStart = hour * 60 + minute
-        val totalEnd = totalStart + duration
+        val totalEnd = totalStart + (duration ?: 30)
         endHour = (totalEnd / 60) % 24
         endMinute = totalEnd % 60
     }
@@ -117,8 +117,6 @@ fun EditTaskDialog(
                     item {
                         var showStart by remember { mutableStateOf(false) }
                         var showEnd by remember { mutableStateOf(false) }
-                        val startState = rememberTimePickerState(hour, minute, true)
-                        val endState = rememberTimePickerState(endHour, endMinute, true)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -138,13 +136,25 @@ fun EditTaskDialog(
                         }
 
                         if (showStart) {
+                            val startState = rememberTimePickerState(hour, minute, true)
                             TimePickerDialog(onDismissRequest = { showStart = false }, confirmButton = {
-                                TextButton(onClick = { hour = startState.hour; minute = startState.minute; if (hasEndTime) updateDurationFromHours(); showStart = false }) { Text("OK") }
+                                TextButton(onClick = { 
+                                    hour = startState.hour
+                                    minute = startState.minute.coerceIn(0, 59)
+                                    if (hasEndTime) updateDurationFromHours()
+                                    showStart = false 
+                                }) { Text("OK") }
                             }) { TimePicker(startState) }
                         }
                         if (showEnd) {
+                            val endState = rememberTimePickerState(endHour, endMinute, true)
                             TimePickerDialog(onDismissRequest = { showEnd = false }, confirmButton = {
-                                TextButton(onClick = { endHour = endState.hour; endMinute = endState.minute; updateDurationFromHours(); showEnd = false }) { Text("OK") }
+                                TextButton(onClick = { 
+                                    endHour = endState.hour
+                                    endMinute = endState.minute.coerceIn(0, 59)
+                                    updateDurationFromHours()
+                                    showEnd = false 
+                                }) { Text("OK") }
                             }) { TimePicker(endState) }
                         }
                     }
@@ -158,10 +168,37 @@ fun EditTaskDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Duración estimada", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            Text("${duration}m", style = MaterialTheme.typography.labelMedium, color = NeonMagenta, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = duration?.let { "${it}m" } ?: "Sin duración fija",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = NeonMagenta,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            item {
+                                val selected = duration == null
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            duration = null
+                                            if (isFixed) hasEndTime = false
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Sin duración",
+                                        color = if (selected) Color.Black else TextPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                             items(listOf(
                                 15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
                                 120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
@@ -190,12 +227,11 @@ fun EditTaskDialog(
                         }
 
                         OutlinedTextField(
-                            value = duration.toString(),
+                            value = duration?.toString() ?: "",
                             onValueChange = { input ->
-                                val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
-                                duration = valMins
+                                duration = input.toIntOrNull()?.coerceAtLeast(1)
                             },
-                            label = { Text("Duración en minutos (ej. 30, 90, 120)", color = TextSecondary, fontSize = 11.sp) },
+                            label = { Text("Duración en minutos (dejar vacío si es opcional)", color = TextSecondary, fontSize = 11.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),

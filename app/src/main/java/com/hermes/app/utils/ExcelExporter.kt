@@ -77,7 +77,7 @@ object ExcelExporter {
                         val safeTitle = task.title.replace(";", ",").replace("\n", " ")
                         val safeDesc = (task.description ?: "").replace(";", ",").replace("\n", " ")
 
-                        writer.append("${task.id};$dateStr;$startStr;$endStr;$safeTitle;$safeDesc;${task.durationMinutes};$priorityStr;$typeStr;$statusStr;${task.createdRole}\n")
+                        writer.append("${task.id};$dateStr;$startStr;$endStr;$safeTitle;$safeDesc;${task.durationMinutes ?: ""};$priorityStr;$typeStr;$statusStr;${task.createdRole}\n")
                     }
 
                     // Métricas de resumen al final del archivo

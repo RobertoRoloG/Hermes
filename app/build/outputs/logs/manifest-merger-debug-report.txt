@@ -1,9 +1,20 @@
 -- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:59:9-67:20
+	android:grantUriPermissions
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:63:13-47
+	android:authorities
+		INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:61:13-60
+	android:exported
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:62:13-37
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:60:13-62
 manifest
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-48:12
-INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-48:12
-INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-48:12
-INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-48:12
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-70:12
+INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-70:12
+INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-70:12
+INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:2:1-70:12
 MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\bd0bc0c5183a61e3ec071accc0ae0ba6\workspace\transformed\generativeai-0.9.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.compose.material3:material3:1.1.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\3d17ea462765d190d6ff729e407d3880\workspace\transformed\material3-1.1.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.activity:activity-compose:1.8.2] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ef0c96918014ffc3421366e01ef05bb1\workspace\transformed\activity-compose-1.8.2\AndroidManifest.xml:2:1-7:12
@@ -39,14 +50,15 @@ MERGED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\9.3.0\tr
 MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ff7f8487d33ec39cdad20729f575a3a6\workspace\transformed\common-0.8.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\28922d3f9140240c0aa732f6f87c6101\workspace\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\60954dbba90f48071d0afb2cc81c3e5e\workspace\transformed\core-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\d0c3a63c95908b530056d92316f6c1ad\workspace\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.room:room-runtime:2.6.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ee590f9cae5c579bbbd81d9a41b8b576\workspace\transformed\room-runtime-2.6.1\AndroidManifest.xml:17:1-31:12
 MERGED from [androidx.room:room-ktx:2.6.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\0423c8bfbe5b349bee8693bc6fd339e7\workspace\transformed\room-ktx-2.6.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e6d7058bf2e07e2f9a3f4cfbcbe7eb66\workspace\transformed\profileinstaller-1.3.0\AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.sqlite:sqlite-framework:2.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\7bb230806d1027c2ba7c81be7ee35b62\workspace\transformed\sqlite-framework-2.4.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e4c74c5952338b209fbb2d9f8b4da17d\workspace\transformed\sqlite-2.4.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\34b05890f8d03f97a4599b24359dd6bf\workspace\transformed\runtime-saveable-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.runtime:runtime-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\2a255b5d459e6f6cd2135aece934247b\workspace\transformed\runtime-release\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ae97b3de8fbb0b03cc1015a6d0d9fc65\workspace\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\2281233ffb7a36add73b7685fd47e639\workspace\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\99f1854e359a837a86917569e28ca0cd\workspace\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
@@ -84,9 +96,13 @@ uses-permission#android.permission.USE_EXACT_ALARM
 ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:8:5-74
 	android:name
 		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:8:22-71
+uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:9:5-81
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:9:22-78
 application
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:10:5-46:19
-INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:10:5-46:19
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:11:5-68:19
+INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:11:5-68:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e022880e0e17baa6d0b8ba148e90c10e\workspace\transformed\emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e022880e0e17baa6d0b8ba148e90c10e\workspace\transformed\emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\011be1dd026cca2f14b9980629964c53\workspace\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
@@ -106,69 +122,97 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\usuario\.gradle\ca
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\358e9d40fa6ce7525ae9684ad48999e9\workspace\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:15:9-35
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:16:9-35
 	android:label
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:13:9-31
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:14:9-31
 	android:roundIcon
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:14:9-54
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:15:9-54
 	android:icon
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:12:9-43
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:13:9-43
 	android:allowBackup
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:11:9-35
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:12:9-35
 	android:theme
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:16:9-44
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:17:9-44
 activity#com.hermes.app.ui.main.MainActivity
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:18:9-41:20
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:19:9-42:20
 	android:launchMode
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:21:13-43
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:22:13-43
 	android:exported
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:20:13-36
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:21:13-36
 	android:theme
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:22:13-48
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:23:13-57
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:19:13-49
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:20:13-49
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:23:13-26:29
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:24:13-27:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:24:17-69
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:25:17-69
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:24:25-66
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:25:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:25:17-77
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:26:17-77
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:25:27-74
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:26:27-74
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:add_task+data:scheme:hermes
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:29:13-36:29
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:30:13-37:29
 action#android.intent.action.VIEW
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:30:17-69
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:31:17-69
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:30:25-66
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:31:25-66
 category#android.intent.category.DEFAULT
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:31:17-76
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:32:17-76
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:31:27-73
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:32:27-73
 category#android.intent.category.BROWSABLE
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:32:17-78
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:33:17-78
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:32:27-75
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:33:27-75
 data
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:33:17-35:47
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:34:17-36:47
 	android:host
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:35:21-44
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:36:21-44
 	android:scheme
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:34:21-44
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:35:21-44
 meta-data#android.app.shortcuts
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:38:13-40:53
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:39:13-41:53
 	android:resource
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:40:17-50
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:41:17-50
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:39:17-53
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:40:17-53
 receiver#com.hermes.app.receiver.TaskNotificationReceiver
-ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:43:9-45:40
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:44:9-46:40
 	android:exported
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:45:13-37
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:46:13-37
 	android:name
-		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:44:13-62
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:45:13-62
+receiver#com.hermes.app.receiver.BootReceiver
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:48:9-57:20
+	android:enabled
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:50:13-35
+	android:exported
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:51:13-36
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:49:13-50
+intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.LOCKED_BOOT_COMPLETED+action:name:android.intent.action.MY_PACKAGE_REPLACED
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:52:13-56:29
+action#android.intent.action.BOOT_COMPLETED
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:53:17-79
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:53:25-76
+action#android.intent.action.LOCKED_BOOT_COMPLETED
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:54:17-86
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:54:25-83
+action#android.intent.action.MY_PACKAGE_REPLACED
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:55:17-84
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:55:25-81
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:64:13-66:58
+	android:resource
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:66:17-55
+	android:name
+		ADDED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml:65:17-67
 uses-sdk
 INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\usuario\Desktop\Roberto\Hermes\app\src\main\AndroidManifest.xml
@@ -243,6 +287,8 @@ MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usu
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\28922d3f9140240c0aa732f6f87c6101\workspace\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\60954dbba90f48071d0afb2cc81c3e5e\workspace\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\60954dbba90f48071d0afb2cc81c3e5e\workspace\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\d0c3a63c95908b530056d92316f6c1ad\workspace\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core-splashscreen:1.0.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\d0c3a63c95908b530056d92316f6c1ad\workspace\transformed\core-splashscreen-1.0.1\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.room:room-runtime:2.6.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ee590f9cae5c579bbbd81d9a41b8b576\workspace\transformed\room-runtime-2.6.1\AndroidManifest.xml:21:5-44
 MERGED from [androidx.room:room-runtime:2.6.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ee590f9cae5c579bbbd81d9a41b8b576\workspace\transformed\room-runtime-2.6.1\AndroidManifest.xml:21:5-44
 MERGED from [androidx.room:room-ktx:2.6.1] C:\Users\usuario\.gradle\caches\9.3.0\transforms\0423c8bfbe5b349bee8693bc6fd339e7\workspace\transformed\room-ktx-2.6.1\AndroidManifest.xml:20:5-44
@@ -253,12 +299,12 @@ MERGED from [androidx.sqlite:sqlite-framework:2.4.0] C:\Users\usuario\.gradle\ca
 MERGED from [androidx.sqlite:sqlite-framework:2.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\7bb230806d1027c2ba7c81be7ee35b62\workspace\transformed\sqlite-framework-2.4.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e4c74c5952338b209fbb2d9f8b4da17d\workspace\transformed\sqlite-2.4.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\e4c74c5952338b209fbb2d9f8b4da17d\workspace\transformed\sqlite-2.4.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\34b05890f8d03f97a4599b24359dd6bf\workspace\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.runtime:runtime-saveable-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\34b05890f8d03f97a4599b24359dd6bf\workspace\transformed\runtime-saveable-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.runtime:runtime-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\2a255b5d459e6f6cd2135aece934247b\workspace\transformed\runtime-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.runtime:runtime-android:1.5.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\2a255b5d459e6f6cd2135aece934247b\workspace\transformed\runtime-release\AndroidManifest.xml:5:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\1892cb28316a9259583efcd56b732068\workspace\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ae97b3de8fbb0b03cc1015a6d0d9fc65\workspace\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\ae97b3de8fbb0b03cc1015a6d0d9fc65\workspace\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\usuario\.gradle\caches\9.3.0\transforms\2281233ffb7a36add73b7685fd47e639\workspace\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44

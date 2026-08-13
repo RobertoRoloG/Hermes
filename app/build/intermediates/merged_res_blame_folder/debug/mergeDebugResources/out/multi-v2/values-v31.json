@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.hermes.app-mergeDebugResources-45:/values-v31/values-v31.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\usuario\\.gradle\\caches\\9.3.0\\transforms\\d0c3a63c95908b530056d92316f6c1ad\\workspace\\transformed\\core-splashscreen-1.0.1\\res\\values-v31\\values-v31.xml",
+                    "from": {
+                        "startLines": "2,9",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,473",
+                        "endLines": "8,13",
+                        "endColumns": "12,12",
+                        "endOffsets": "468,697"
+                    }
+                }
+            ]
+        }
+    ]
+}

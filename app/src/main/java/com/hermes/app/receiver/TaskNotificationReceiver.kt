@@ -10,7 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.hermes.app.data.local.HermesDatabase
 import com.hermes.app.domain.RoleManager
-import com.hermes.app.domain.ai.GeminiRoleService
+import com.hermes.app.domain.ai.GroqRoleService
 import com.hermes.app.utils.NotificationScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +42,7 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                     try {
                         val db = HermesDatabase.getDatabase(context)
                         val roleManager = RoleManager(context)
-                        val geminiService = GeminiRoleService()
+                        val aiService = GroqRoleService()
                         
                         val task = db.taskDao().getTaskById(taskId)
                         if (task != null && !task.isCompleted) {
@@ -53,7 +53,7 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                             }
 
                             // Si la IA falla, devuelve null y NO actualizamos la DB (para que el disparo real sepa que no hay IA)
-                            val message = geminiService.generateAdvanceNotification(
+                            val message = aiService.generateAdvanceNotification(
                                 role = activeRole,
                                 taskTitle = task.title,
                                 scheduledStartMs = task.scheduledStart ?: System.currentTimeMillis(),
@@ -169,8 +169,8 @@ class TaskNotificationReceiver : BroadcastReceiver() {
                 if (message.isNullOrBlank()) {
                     android.util.Log.d("HermesNotify", "No hay mensaje pre-generado. Intentando generar IA en tiempo real...")
                     try {
-                        val geminiService = GeminiRoleService()
-                        val aiMsg = geminiService.generateAdvanceNotification(
+                        val aiService = GroqRoleService()
+                        val aiMsg = aiService.generateAdvanceNotification(
                             role = activeRole,
                             taskTitle = taskTitle,
                             scheduledStartMs = scheduledStart,

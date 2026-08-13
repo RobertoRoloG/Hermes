@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Ala Izquierda Dorada y Blanca -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,54 C45,40 30,36 18,42 C24,48 32,50 42,52 C32,54 22,58 14,64 C24,64 34,62 46,58 Z" />
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M54,52 C47,42 34,39 23,43 C29,48 37,49 45,51 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,50 C49,44 38,42 28,45 C34,49 41,50 48,51 Z" />
+
+    <!-- Ala Derecha Dorada y Blanca -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,54 C63,40 78,36 90,42 C84,48 76,50 66,52 C76,54 86,58 94,64 C84,64 74,62 62,58 Z" />
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M54,52 C61,42 74,39 85,43 C79,48 71,49 63,51 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,50 C59,44 70,42 80,45 C74,49 67,50 60,51 Z" />
+
+    <!-- Anillo Exterior del Reloj (Cian Neón) -->
+    <path
+        android:fillColor="#00F0FF"
+        android:pathData="M54,34 A20,20 0 1,1 53.99,34 Z" />
+    <path
+        android:fillColor="#0A192F"
+        android:pathData="M54,37 A17,17 0 1,1 53.99,37 Z" />
+
+    <!-- Centro Pivot del Reloj -->
+    <path
+        android:fillColor="#00F0FF"
+        android:pathData="M54,54 A3,3 0 1,1 53.99,54 Z" />
+
+    <!-- Aguja Horaria (10:10) Dorada -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M53,54 L44,45 L46,43 L55,52 Z" />
+    <!-- Aguja Minutero (10:10) Blanca -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M53.5,54.5 L65,42 L67,44 L54.5,55.5 Z" />
+
+    <!-- Marcas Horarias -->
+    <path
+        android:fillColor="#00F0FF"
+        android:pathData="M53,39 h2 v3 h-2 z M53,66 h2 v3 h-2 z M39,53 h3 v2 h-3 z M66,53 h3 v2 h-3 z" />
+
+</vector>

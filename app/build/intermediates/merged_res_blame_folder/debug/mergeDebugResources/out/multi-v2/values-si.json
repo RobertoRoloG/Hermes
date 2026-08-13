@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.hermes.app-mergeDebugResources-44:/values-si/values-si.xml",
+            "outputFile": "com.hermes.app-mergeDebugResources-45:/values-si/values-si.xml",
             "map": [
                 {
                     "source": "C:\\Users\\usuario\\.gradle\\caches\\9.3.0\\transforms\\35b22c125567a1089813e62ab1462d51\\workspace\\transformed\\ui-release\\res\\values-si\\values-si.xml",

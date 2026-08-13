@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.hermes.app-mergeDebugResources-44:/values-az/values-az.xml",
+            "outputFile": "com.hermes.app-mergeDebugResources-45:/values-az/values-az.xml",
             "map": [
                 {
                     "source": "C:\\Users\\usuario\\.gradle\\caches\\9.3.0\\transforms\\358e9d40fa6ce7525ae9684ad48999e9\\workspace\\transformed\\core-1.12.0\\res\\values-az\\values-az.xml",

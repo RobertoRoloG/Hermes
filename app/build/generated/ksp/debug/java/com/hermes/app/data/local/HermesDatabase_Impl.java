@@ -33,12 +33,12 @@ public final class HermesDatabase_Impl extends HermesDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(5) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `isFixed` INTEGER NOT NULL, `durationMinutes` INTEGER NOT NULL, `reminderLeadMinutes` INTEGER NOT NULL, `deadline` INTEGER, `scheduledStart` INTEGER, `scheduledEnd` INTEGER, `isAutoScheduled` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdRole` TEXT NOT NULL, `preGeneratedMessage` TEXT)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `isFixed` INTEGER NOT NULL, `durationMinutes` INTEGER, `reminderLeadMinutes` INTEGER NOT NULL, `deadline` INTEGER, `scheduledStart` INTEGER, `scheduledEnd` INTEGER, `isAutoScheduled` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdRole` TEXT NOT NULL, `preGeneratedMessage` TEXT, `description` TEXT)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b64a8453dc695e4bdd359882af129742')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6994e5d431162e37d81a226e04c158f4')");
       }
 
       @Override
@@ -87,11 +87,11 @@ public final class HermesDatabase_Impl extends HermesDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsTasks = new HashMap<String, TableInfo.Column>(14);
+        final HashMap<String, TableInfo.Column> _columnsTasks = new HashMap<String, TableInfo.Column>(15);
         _columnsTasks.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("title", new TableInfo.Column("title", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("isFixed", new TableInfo.Column("isFixed", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTasks.put("durationMinutes", new TableInfo.Column("durationMinutes", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTasks.put("durationMinutes", new TableInfo.Column("durationMinutes", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("reminderLeadMinutes", new TableInfo.Column("reminderLeadMinutes", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("deadline", new TableInfo.Column("deadline", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("scheduledStart", new TableInfo.Column("scheduledStart", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -102,6 +102,7 @@ public final class HermesDatabase_Impl extends HermesDatabase {
         _columnsTasks.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("createdRole", new TableInfo.Column("createdRole", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("preGeneratedMessage", new TableInfo.Column("preGeneratedMessage", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTasks.put("description", new TableInfo.Column("description", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysTasks = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesTasks = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoTasks = new TableInfo("tasks", _columnsTasks, _foreignKeysTasks, _indicesTasks);
@@ -113,7 +114,7 @@ public final class HermesDatabase_Impl extends HermesDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "b64a8453dc695e4bdd359882af129742", "bfc35dddb4af68a22bc11346252227e4");
+    }, "6994e5d431162e37d81a226e04c158f4", "145733984e4c1c5eba8d5ce3f7873568");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

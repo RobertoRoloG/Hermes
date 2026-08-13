@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.hermes.app.data.local.dao.TaskDao
 import com.hermes.app.data.local.entity.TaskEntity
 
-@Database(entities = [TaskEntity::class], version = 4, exportSchema = false)
+@Database(entities = [TaskEntity::class], version = 5, exportSchema = false)
 abstract class HermesDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao

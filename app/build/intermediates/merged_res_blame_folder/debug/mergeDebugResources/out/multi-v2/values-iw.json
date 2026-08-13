@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.hermes.app-mergeDebugResources-44:/values-iw/values-iw.xml",
+            "outputFile": "com.hermes.app-mergeDebugResources-45:/values-iw/values-iw.xml",
             "map": [
                 {
                     "source": "C:\\Users\\usuario\\.gradle\\caches\\9.3.0\\transforms\\3d17ea462765d190d6ff729e407d3880\\workspace\\transformed\\material3-1.1.1\\res\\values-iw\\values-iw.xml",

@@ -3,7 +3,7 @@ package com.hermes.app.domain
 import android.content.Context
 import android.content.SharedPreferences
 import com.hermes.app.data.local.entity.TaskEntity
-import com.hermes.app.domain.ai.GeminiRoleService
+import com.hermes.app.domain.ai.GroqRoleService
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -19,7 +19,7 @@ class RoleManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("hermes_settings", Context.MODE_PRIVATE)
 
-    private val geminiRoleService = GeminiRoleService()
+    private val aiService = GroqRoleService()
 
     companion object {
         private const val KEY_ACTIVE_ROLE_IDS = "active_role_ids_set"
@@ -206,26 +206,31 @@ class RoleManager(context: Context) {
      */
     suspend fun generateDynamicNotificationMessage(task: TaskEntity): String {
         val assignedRole = getRoleByDisplayName(task.createdRole)
-        return geminiRoleService.generateRoleNotification(assignedRole, task)
+        return aiService.generateRoleNotification(assignedRole, task)
     }
 
     suspend fun generateAdvanceNotificationForTask(task: TaskEntity): String {
         val assignedRole = getRoleByDisplayName(task.createdRole)
         val startMs = task.scheduledStart ?: System.currentTimeMillis()
-        return geminiRoleService.generateAdvanceNotification(
+        val aiResult = aiService.generateAdvanceNotification(
             role = assignedRole,
             taskTitle = task.title,
             scheduledStartMs = startMs,
             leadMinutes = task.reminderLeadMinutes,
             durationMinutes = task.durationMinutes
         )
+        return aiResult ?: run {
+            val assistantName = getAssistantName()
+            val leadStr = if (task.reminderLeadMinutes > 0) "${task.reminderLeadMinutes} min" else "ahora"
+            "[$assistantName] Aviso: '${task.title}' en $leadStr."
+        }
     }
 
     /**
-     * Usa a Gemini para obtener el orden ideal de ejecución de un grupo de tareas.
+     * Usa la IA para obtener el orden ideal de ejecución de un grupo de tareas.
      */
     suspend fun getAIRankedTaskIds(tasks: List<TaskEntity>): List<Long> {
-        return geminiRoleService.rankTasksPriority(tasks)
+        return aiService.rankTasksPriority(tasks)
     }
 }
 

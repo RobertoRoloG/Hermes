@@ -16,6 +16,7 @@ import androidx.sqlite.db.SupportSQLiteStatement;
 import com.hermes.app.data.local.entity.TaskEntity;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Object;
 import java.lang.Override;
@@ -55,7 +56,7 @@ public final class TaskDao_Impl implements TaskDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`isFixed`,`durationMinutes`,`reminderLeadMinutes`,`deadline`,`scheduledStart`,`scheduledEnd`,`isAutoScheduled`,`priority`,`isCompleted`,`createdAt`,`createdRole`,`preGeneratedMessage`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`isFixed`,`durationMinutes`,`reminderLeadMinutes`,`deadline`,`scheduledStart`,`scheduledEnd`,`isAutoScheduled`,`priority`,`isCompleted`,`createdAt`,`createdRole`,`preGeneratedMessage`,`description`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -65,7 +66,11 @@ public final class TaskDao_Impl implements TaskDao {
         statement.bindString(2, entity.getTitle());
         final int _tmp = entity.isFixed() ? 1 : 0;
         statement.bindLong(3, _tmp);
-        statement.bindLong(4, entity.getDurationMinutes());
+        if (entity.getDurationMinutes() == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindLong(4, entity.getDurationMinutes());
+        }
         statement.bindLong(5, entity.getReminderLeadMinutes());
         if (entity.getDeadline() == null) {
           statement.bindNull(6);
@@ -93,6 +98,11 @@ public final class TaskDao_Impl implements TaskDao {
           statement.bindNull(14);
         } else {
           statement.bindString(14, entity.getPreGeneratedMessage());
+        }
+        if (entity.getDescription() == null) {
+          statement.bindNull(15);
+        } else {
+          statement.bindString(15, entity.getDescription());
         }
       }
     };
@@ -113,7 +123,7 @@ public final class TaskDao_Impl implements TaskDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`isFixed` = ?,`durationMinutes` = ?,`reminderLeadMinutes` = ?,`deadline` = ?,`scheduledStart` = ?,`scheduledEnd` = ?,`isAutoScheduled` = ?,`priority` = ?,`isCompleted` = ?,`createdAt` = ?,`createdRole` = ?,`preGeneratedMessage` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`isFixed` = ?,`durationMinutes` = ?,`reminderLeadMinutes` = ?,`deadline` = ?,`scheduledStart` = ?,`scheduledEnd` = ?,`isAutoScheduled` = ?,`priority` = ?,`isCompleted` = ?,`createdAt` = ?,`createdRole` = ?,`preGeneratedMessage` = ?,`description` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -123,7 +133,11 @@ public final class TaskDao_Impl implements TaskDao {
         statement.bindString(2, entity.getTitle());
         final int _tmp = entity.isFixed() ? 1 : 0;
         statement.bindLong(3, _tmp);
-        statement.bindLong(4, entity.getDurationMinutes());
+        if (entity.getDurationMinutes() == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindLong(4, entity.getDurationMinutes());
+        }
         statement.bindLong(5, entity.getReminderLeadMinutes());
         if (entity.getDeadline() == null) {
           statement.bindNull(6);
@@ -152,7 +166,12 @@ public final class TaskDao_Impl implements TaskDao {
         } else {
           statement.bindString(14, entity.getPreGeneratedMessage());
         }
-        statement.bindLong(15, entity.getId());
+        if (entity.getDescription() == null) {
+          statement.bindNull(15);
+        } else {
+          statement.bindString(15, entity.getDescription());
+        }
+        statement.bindLong(16, entity.getId());
       }
     };
     this.__preparedStmtOfUpdateTaskStatus = new SharedSQLiteStatement(__db) {
@@ -394,6 +413,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -405,8 +425,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -447,7 +471,13 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
             _result.add(_item);
           }
           return _result;
@@ -467,18 +497,25 @@ public final class TaskDao_Impl implements TaskDao {
   public Flow<List<TaskEntity>> getTasksForDateRange(final long startOfDay, final long endOfDay) {
     final String _sql = "\n"
             + "        SELECT * FROM tasks \n"
-            + "        WHERE (scheduledStart >= ? AND scheduledStart <= ?) \n"
-            + "           OR (scheduledStart IS NULL AND createdAt >= ? AND createdAt <= ?)\n"
+            + "        WHERE (\n"
+            + "            (scheduledStart IS NOT NULL AND scheduledEnd IS NOT NULL AND scheduledStart <= ? AND scheduledEnd >= ?)\n"
+            + "            OR (scheduledStart IS NOT NULL AND scheduledEnd IS NULL AND scheduledStart >= ? AND scheduledStart <= ?)\n"
+            + "        ) \n"
+            + "        OR (scheduledStart IS NULL AND createdAt >= ? AND createdAt <= ?)\n"
             + "        ORDER BY isCompleted ASC, scheduledStart ASC, priority DESC\n"
             + "    ";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 4);
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 6);
     int _argIndex = 1;
-    _statement.bindLong(_argIndex, startOfDay);
-    _argIndex = 2;
     _statement.bindLong(_argIndex, endOfDay);
+    _argIndex = 2;
+    _statement.bindLong(_argIndex, startOfDay);
     _argIndex = 3;
     _statement.bindLong(_argIndex, startOfDay);
     _argIndex = 4;
+    _statement.bindLong(_argIndex, endOfDay);
+    _argIndex = 5;
+    _statement.bindLong(_argIndex, startOfDay);
+    _argIndex = 6;
     _statement.bindLong(_argIndex, endOfDay);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"tasks"}, new Callable<List<TaskEntity>>() {
       @Override
@@ -500,6 +537,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -511,8 +549,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -553,7 +595,13 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
             _result.add(_item);
           }
           return _result;
@@ -594,6 +642,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -605,8 +654,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -647,7 +700,13 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
             _result.add(_item);
           }
           return _result;
@@ -685,6 +744,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -696,8 +756,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -738,7 +802,13 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
             _result.add(_item);
           }
           return _result;
@@ -775,6 +845,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -786,8 +857,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -828,7 +903,13 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
             _result.add(_item);
           }
           return _result;
@@ -867,6 +948,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
           final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
           final TaskEntity _result;
           if (_cursor.moveToFirst()) {
             final long _tmpId;
@@ -877,8 +959,12 @@ public final class TaskDao_Impl implements TaskDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
             _tmpIsFixed = _tmp != 0;
-            final int _tmpDurationMinutes;
-            _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
             final int _tmpReminderLeadMinutes;
             _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
             final Long _tmpDeadline;
@@ -919,9 +1005,116 @@ public final class TaskDao_Impl implements TaskDao {
             } else {
               _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
             }
-            _result = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage);
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _result = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
           } else {
             _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getActiveScheduledTasks(final Continuation<? super List<TaskEntity>> $completion) {
+    final String _sql = "SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledStart IS NOT NULL";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<TaskEntity>>() {
+      @Override
+      @NonNull
+      public List<TaskEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+          final int _cursorIndexOfIsFixed = CursorUtil.getColumnIndexOrThrow(_cursor, "isFixed");
+          final int _cursorIndexOfDurationMinutes = CursorUtil.getColumnIndexOrThrow(_cursor, "durationMinutes");
+          final int _cursorIndexOfReminderLeadMinutes = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderLeadMinutes");
+          final int _cursorIndexOfDeadline = CursorUtil.getColumnIndexOrThrow(_cursor, "deadline");
+          final int _cursorIndexOfScheduledStart = CursorUtil.getColumnIndexOrThrow(_cursor, "scheduledStart");
+          final int _cursorIndexOfScheduledEnd = CursorUtil.getColumnIndexOrThrow(_cursor, "scheduledEnd");
+          final int _cursorIndexOfIsAutoScheduled = CursorUtil.getColumnIndexOrThrow(_cursor, "isAutoScheduled");
+          final int _cursorIndexOfPriority = CursorUtil.getColumnIndexOrThrow(_cursor, "priority");
+          final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfCreatedRole = CursorUtil.getColumnIndexOrThrow(_cursor, "createdRole");
+          final int _cursorIndexOfPreGeneratedMessage = CursorUtil.getColumnIndexOrThrow(_cursor, "preGeneratedMessage");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
+          final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final TaskEntity _item;
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final String _tmpTitle;
+            _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+            final boolean _tmpIsFixed;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsFixed);
+            _tmpIsFixed = _tmp != 0;
+            final Integer _tmpDurationMinutes;
+            if (_cursor.isNull(_cursorIndexOfDurationMinutes)) {
+              _tmpDurationMinutes = null;
+            } else {
+              _tmpDurationMinutes = _cursor.getInt(_cursorIndexOfDurationMinutes);
+            }
+            final int _tmpReminderLeadMinutes;
+            _tmpReminderLeadMinutes = _cursor.getInt(_cursorIndexOfReminderLeadMinutes);
+            final Long _tmpDeadline;
+            if (_cursor.isNull(_cursorIndexOfDeadline)) {
+              _tmpDeadline = null;
+            } else {
+              _tmpDeadline = _cursor.getLong(_cursorIndexOfDeadline);
+            }
+            final Long _tmpScheduledStart;
+            if (_cursor.isNull(_cursorIndexOfScheduledStart)) {
+              _tmpScheduledStart = null;
+            } else {
+              _tmpScheduledStart = _cursor.getLong(_cursorIndexOfScheduledStart);
+            }
+            final Long _tmpScheduledEnd;
+            if (_cursor.isNull(_cursorIndexOfScheduledEnd)) {
+              _tmpScheduledEnd = null;
+            } else {
+              _tmpScheduledEnd = _cursor.getLong(_cursorIndexOfScheduledEnd);
+            }
+            final boolean _tmpIsAutoScheduled;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsAutoScheduled);
+            _tmpIsAutoScheduled = _tmp_1 != 0;
+            final int _tmpPriority;
+            _tmpPriority = _cursor.getInt(_cursorIndexOfPriority);
+            final boolean _tmpIsCompleted;
+            final int _tmp_2;
+            _tmp_2 = _cursor.getInt(_cursorIndexOfIsCompleted);
+            _tmpIsCompleted = _tmp_2 != 0;
+            final long _tmpCreatedAt;
+            _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
+            final String _tmpCreatedRole;
+            _tmpCreatedRole = _cursor.getString(_cursorIndexOfCreatedRole);
+            final String _tmpPreGeneratedMessage;
+            if (_cursor.isNull(_cursorIndexOfPreGeneratedMessage)) {
+              _tmpPreGeneratedMessage = null;
+            } else {
+              _tmpPreGeneratedMessage = _cursor.getString(_cursorIndexOfPreGeneratedMessage);
+            }
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpIsFixed,_tmpDurationMinutes,_tmpReminderLeadMinutes,_tmpDeadline,_tmpScheduledStart,_tmpScheduledEnd,_tmpIsAutoScheduled,_tmpPriority,_tmpIsCompleted,_tmpCreatedAt,_tmpCreatedRole,_tmpPreGeneratedMessage,_tmpDescription);
+            _result.add(_item);
           }
           return _result;
         } finally {

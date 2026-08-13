@@ -13,4 +13,6 @@ mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name
 style Theme.Hermes
+style Theme.Hermes.Starting
+xml provider_paths
 xml shortcuts

@@ -117,7 +117,7 @@ object PdfExporter {
                 val displayTitle = if (task.title.length > 35) task.title.take(32) + "..." else task.title
                 canvas.drawText(displayTitle, 110f, currentY + 15f, paint)
 
-                canvas.drawText("${task.durationMinutes} min", 330f, currentY + 15f, paint)
+                canvas.drawText(task.durationMinutes?.let { "$it min" } ?: "-", 330f, currentY + 15f, paint)
 
                 val priorityText = when (task.priority) {
                     3 -> "Alta"

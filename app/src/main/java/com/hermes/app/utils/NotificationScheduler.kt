@@ -37,7 +37,8 @@ object NotificationScheduler {
         val startMs = task.scheduledStart ?: return
         val now = System.currentTimeMillis()
 
-        val endMs = task.scheduledEnd ?: (startMs + task.durationMinutes * 60 * 1000L)
+        val dur = task.durationMinutes ?: 30
+        val endMs = task.scheduledEnd ?: (startMs + dur * 60 * 1000L)
         if (endMs <= now) return
 
         val leadMs = task.reminderLeadMinutes * 60 * 1000L
@@ -47,8 +48,8 @@ object NotificationScheduler {
             triggerTimeMs = now + 1000L
         }
 
-        // Programar preparación de la IA 2 minutos antes del trigger real
-        val prepTriggerTimeMs = triggerTimeMs - (2 * 60 * 1000L)
+        // Programar preparación de la IA 3 minutos antes del trigger real
+        val prepTriggerTimeMs = triggerTimeMs - (3 * 60 * 1000L)
         if (prepTriggerTimeMs > now) {
             scheduleAlarm(context, task, prepTriggerTimeMs, isPrepareOnly = true)
         } else {
@@ -59,7 +60,7 @@ object NotificationScheduler {
                 putExtra("task_title", task.title)
                 putExtra("scheduled_start", task.scheduledStart)
                 putExtra("reminder_lead_minutes", task.reminderLeadMinutes)
-                putExtra("task_duration", task.durationMinutes)
+                putExtra("task_duration", task.durationMinutes ?: 0)
             }
             context.sendBroadcast(prepIntent)
         }
@@ -78,7 +79,7 @@ object NotificationScheduler {
             putExtra("task_title", task.title)
             putExtra("scheduled_start", task.scheduledStart)
             putExtra("reminder_lead_minutes", task.reminderLeadMinutes)
-            putExtra("task_duration", task.durationMinutes)
+            putExtra("task_duration", task.durationMinutes ?: 0)
         }
 
         // Request code diferenciado para preparación y disparo
@@ -112,9 +113,14 @@ object NotificationScheduler {
     fun cancelTaskNotification(context: Context, taskId: Long) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         
-        // Cancelar ambas alarmas
-        listOf(getAlarmRequestCode(taskId, false), getAlarmRequestCode(taskId, true)).forEach { requestCode ->
-            val intent = Intent(context, TaskNotificationReceiver::class.java)
+        // Cancelar ambas alarmas (Fuego real y Preparación JIT)
+        listOf(false, true).forEach { isPrepare ->
+            val requestCode = getAlarmRequestCode(taskId, isPrepare)
+            val intent = Intent(context, TaskNotificationReceiver::class.java).apply {
+                if (isPrepare) {
+                    action = TaskNotificationReceiver.ACTION_PREPARE_NOTIFICATION
+                }
+            }
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,

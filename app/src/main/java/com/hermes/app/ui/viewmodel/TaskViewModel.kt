@@ -51,16 +51,18 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCalendar.value = calendar
     }
 
-    fun findOverlappingTask(newTaskStart: Long?, durationMinutes: Int, newTaskEnd: Long? = null, ignoreTaskId: Long = 0L): TaskEntity? {
+    fun findOverlappingTask(newTaskStart: Long?, durationMinutes: Int?, newTaskEnd: Long? = null, ignoreTaskId: Long = 0L): TaskEntity? {
         if (newTaskStart == null) return null
-        val calculatedEnd = newTaskEnd ?: (newTaskStart + durationMinutes * 60 * 1000L)
+        val dur = durationMinutes ?: 30
+        val calculatedEnd = newTaskEnd ?: (newTaskStart + dur * 60 * 1000L)
         
         return allTasks.value.find { existing ->
             if (existing.id == ignoreTaskId || existing.isCompleted || existing.scheduledStart == null) {
                 false
             } else {
                 val existStart = existing.scheduledStart
-                val existEnd = existing.scheduledEnd ?: (existStart + existing.durationMinutes * 60 * 1000L)
+                val existDur = existing.durationMinutes ?: 30
+                val existEnd = existing.scheduledEnd ?: (existStart + existDur * 60 * 1000L)
                 newTaskStart < existEnd && calculatedEnd > existStart
             }
         }
@@ -73,13 +75,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             val savedTask = contextualized.copy(id = insertedId)
 
             if (savedTask.scheduledStart != null) {
+                // Programamos la alarma. El JIT de NotificationScheduler se encarga de llamar a la IA
                 NotificationScheduler.scheduleTaskNotification(context, savedTask)
-                try {
-                    val preMsg = roleManager.generateAdvanceNotificationForTask(savedTask)
-                    database.taskDao().updatePreGeneratedMessage(insertedId, preMsg)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             }
 
             val aiResponse = roleManager.generateDynamicNotificationMessage(savedTask)
@@ -123,7 +120,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                     if (baseTask.isFixed) {
                         startMs = currentCal.timeInMillis
                         endMs = baseTask.scheduledEnd?.let {
-                            startMs + (baseTask.durationMinutes * 60 * 1000L)
+                            startMs + ((baseTask.durationMinutes ?: 30) * 60 * 1000L)
                         }
                     } else {
                         startMs = currentCal.timeInMillis
@@ -185,12 +182,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 NotificationScheduler.cancelTaskNotification(context, task.id)
             } else if (task.scheduledStart != null) {
                 NotificationScheduler.scheduleTaskNotification(context, task)
-                try {
-                    val preMsg = roleManager.generateAdvanceNotificationForTask(task)
-                    database.taskDao().updatePreGeneratedMessage(task.id, preMsg)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             } else {
                 NotificationScheduler.cancelTaskNotification(context, task.id)
             }

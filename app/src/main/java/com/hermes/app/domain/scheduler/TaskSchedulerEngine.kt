@@ -52,7 +52,8 @@ class TaskSchedulerEngine(
             .filter { it.scheduledStart != null }
             .map { task ->
                 val start = task.scheduledStart!!
-                val end = task.scheduledEnd ?: (start + (task.durationMinutes * 60 * 1000L))
+                val dur = task.durationMinutes ?: 30
+                val end = task.scheduledEnd ?: (start + (dur * 60 * 1000L))
                 TimeSlot(start, end)
             }
             .filter { it.overlapsWith(TimeSlot(startOfDayRaw, endOfDay)) }
@@ -91,7 +92,8 @@ class TaskSchedulerEngine(
     ): ScheduleResult {
         require(!task.isFixed) { "El motor de auto-programación requiere una tarea flexible." }
 
-        val taskDurationMs = task.durationMinutes * 60 * 1000L
+        val durationMins = task.durationMinutes ?: 30
+        val taskDurationMs = durationMins * 60 * 1000L
         
         // Si la tarea tiene un día de inicio pre-marcado ("Disponible desde"), usamos ese día.
         // Si no, usamos la fecha de búsqueda global.
@@ -146,7 +148,7 @@ class TaskSchedulerEngine(
         }
 
         return ScheduleResult.Failure(
-            "No se encontró un hueco suficiente de ${task.durationMinutes} min en $maxSearchDays días."
+            "No se encontró un hueco suficiente de ${durationMins} min en $maxSearchDays días."
         )
     }
 

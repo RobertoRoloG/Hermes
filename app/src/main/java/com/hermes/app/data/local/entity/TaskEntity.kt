@@ -9,7 +9,7 @@ data class TaskEntity(
     val id: Long = 0,
     val title: String,
     val isFixed: Boolean = false,
-    val durationMinutes: Int = 30,
+    val durationMinutes: Int? = null,
     val reminderLeadMinutes: Int = 15, // Minutos de antelación para la pre-alerta
     val deadline: Long? = null,
     val scheduledStart: Long? = null,

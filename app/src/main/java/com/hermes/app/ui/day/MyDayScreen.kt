@@ -298,27 +298,6 @@ fun MyDayScreen(
             dismissButton = { TextButton(onClick = { taskToDelete = null }) { Text("Cancelar") } }
         )
     }
-
-    if (showDatePicker) {
-        val dpState = rememberDatePickerState(initialSelectedDateMillis = selectedCalendar.timeInMillis)
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    dpState.selectedDateMillis?.let {
-                        val cal = Calendar.getInstance().apply { timeInMillis = it }
-                        viewModel.setSelectedDate(cal)
-                    }
-                    showDatePicker = false
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
-            }
-        ) {
-            DatePicker(dpState)
-        }
-    }
 }
 
 @Composable
@@ -397,7 +376,7 @@ fun CreateTaskDialog(
     val context = androidx.compose.ui.platform.LocalContext.current
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var duration by remember { mutableIntStateOf(30) }
+    var duration by remember { mutableStateOf<Int?>(30) }
     var priority by remember { mutableIntStateOf(1) }
     // Sección ¿Cuándo?
     var letHermesChooseDate by remember { mutableStateOf(false) }
@@ -414,7 +393,7 @@ fun CreateTaskDialog(
     var endHour by remember { mutableIntStateOf(9) }
     var endMinute by remember { mutableIntStateOf(30) }
 
-var selectedDays by remember { mutableStateOf(setOf<Int>()) }
+    var selectedDays by remember { mutableStateOf(setOf<Int>()) }
     var numWeeks by remember { mutableIntStateOf(1) }
 
     var showDatePickerInDialog by remember { mutableStateOf(false) }
@@ -436,7 +415,7 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
 
     fun updateEndHourFromDuration() {
         val startTotal = hour * 60 + minute
-        val endTotal = startTotal + duration
+        val endTotal = startTotal + (duration ?: 30)
         endHour = (endTotal / 60) % 24
         endMinute = endTotal % 60
     }
@@ -499,13 +478,15 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                             )
                             
                             val durationText = remember(duration) {
-                                val h = duration / 60
-                                val m = duration % 60
-                                when {
-                                    h > 0 && m > 0 -> "${h}h ${m}m ($duration min)"
-                                    h > 0 -> "${h}h ($duration min)"
-                                    else -> "${m}m"
-                                }
+                                duration?.let { dur ->
+                                    val h = dur / 60
+                                    val m = dur % 60
+                                    when {
+                                        h > 0 && m > 0 -> "${h}h ${m}m ($dur min)"
+                                        h > 0 -> "${h}h ($dur min)"
+                                        else -> "${m}m"
+                                    }
+                                } ?: "Sin duración fija"
                             }
 
                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -519,6 +500,28 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                                 }
 
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    item {
+                                        val selected = duration == null
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = if (selected) NeonMagenta else SurfaceVariantDark,
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable {
+                                                    duration = null
+                                                    if (isFixed) hasEndTime = false
+                                                }
+                                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = "Sin duración",
+                                                color = if (selected) Color.Black else TextPrimary,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
                                     items(listOf(
                                         15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h", 90 to "1.5h", 
                                         120 to "2h", 180 to "3h", 240 to "4h", 480 to "8h", 720 to "12h", 1440 to "24h"
@@ -547,13 +550,12 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                                 }
 
                                 OutlinedTextField(
-                                    value = duration.toString(),
+                                    value = duration?.toString() ?: "",
                                     onValueChange = { input ->
-                                        val valMins = input.toIntOrNull()?.coerceAtLeast(1) ?: 1
-                                        duration = valMins
-                                        if (isFixed) updateEndHourFromDuration()
+                                        duration = input.toIntOrNull()?.coerceAtLeast(1)
+                                        if (isFixed && duration != null) updateEndHourFromDuration()
                                     },
-                                    label = { Text("Duración en minutos (ej. 30, 90, 120)", color = TextSecondary, fontSize = 11.sp) },
+                                    label = { Text("Duración en minutos (dejar vacío si es opcional)", color = TextSecondary, fontSize = 11.sp) },
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
@@ -615,8 +617,6 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
 
                                     var showStartT by remember { mutableStateOf(false) }
                                     var showEndT by remember { mutableStateOf(false) }
-                                    val sState = rememberTimePickerState(hour, minute, true)
-                                    val eState = rememberTimePickerState(endHour, endMinute, true)
 
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                         Column(modifier = Modifier.weight(1f)) {
@@ -634,8 +634,14 @@ var selectedDays by remember { mutableStateOf(setOf<Int>()) }
                                             }
                                         }
                                     }
-                                    if(showStartT) TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute; if (hasEndTime) updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
-                                    if(showEndT) TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute; updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
+                                    if(showStartT) {
+                                        val sState = rememberTimePickerState(hour, minute, true)
+                                        TimePickerDialog(onDismissRequest = { showStartT = false }, confirmButton = { TextButton(onClick = { hour = sState.hour; minute = sState.minute.coerceIn(0, 59); if (hasEndTime) updateDurationFromHours(); showStartT = false }) { Text("OK") } }) { TimePicker(sState) }
+                                    }
+                                    if(showEndT) {
+                                        val eState = rememberTimePickerState(endHour, endMinute, true)
+                                        TimePickerDialog(onDismissRequest = { showEndT = false }, confirmButton = { TextButton(onClick = { endHour = eState.hour; endMinute = eState.minute.coerceIn(0, 59); updateDurationFromHours(); showEndT = false }) { Text("OK") } }) { TimePicker(eState) }
+                                    }
                                 }
                             } else {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

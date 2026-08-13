@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Built-in Intent para creación de tareas mediante Google Assistant -->
+    <capability android:name="actions.intent.CREATE_TASTE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.hermes.app"
+            android:targetClass="com.hermes.app.ui.main.MainActivity">
+            <parameter
+                android:name="taste.name"
+                android:key="task_title" />
+        </intent>
+    </capability>
+
+    <!-- Built-in Intent alternativo para creación genérica -->
+    <capability android:name="actions.intent.CREATE_THING">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.hermes.app"
+            android:targetClass="com.hermes.app.ui.main.MainActivity">
+            <parameter
+                android:name="thing.name"
+                android:key="task_title" />
+        </intent>
+    </capability>
+
+    <!-- Custom Capability para Hermes con soporte de parámetros extendidos -->
+    <capability android:name="com.hermes.app.ADD_TASK">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.hermes.app"
+            android:targetClass="com.hermes.app.ui.main.MainActivity">
+            <parameter
+                android:name="task_title"
+                android:key="task_title" />
+            <parameter
+                android:name="duration"
+                android:key="duration" />
+            <parameter
+                android:name="is_fixed"
+                android:key="is_fixed" />
+        </intent>
+    </capability>
+</shortcuts>

@@ -2,7 +2,7 @@ package com.hermes.app
 
 import com.hermes.app.data.local.entity.TaskEntity
 import com.hermes.app.domain.RoleItem
-import com.hermes.app.domain.ai.GeminiRoleService
+import com.hermes.app.domain.ai.GroqRoleService
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class GeminiNotificationVerificationTest {
+class GroqNotificationVerificationTest {
 
     @Test
     fun testRoleFallbackFormatting() {
@@ -35,8 +35,8 @@ class GeminiNotificationVerificationTest {
     }
 
     @Test
-    fun testGeminiRoleServiceAdvanceNotification() = runBlocking {
-        val service = GeminiRoleService()
+    fun testGroqRoleServiceAdvanceNotification() = runBlocking {
+        val service = GroqRoleService()
         val role = RoleItem(
             id = "STRICT_COACH",
             displayName = "Entrenador Estricto",
@@ -50,11 +50,13 @@ class GeminiNotificationVerificationTest {
         )
         val result = service.generateRoleNotification(role, task)
         assertNotNull(result)
+        println("Resultado de Groq: $result")
+        org.junit.Assert.assertFalse("Groq API devolvió fallback", result.startsWith("[FALLBACK]"))
     }
 
     @Test
-    fun testGeminiTaskPriorityRanking() = runBlocking {
-        val service = GeminiRoleService()
+    fun testGroqTaskPriorityRanking() = runBlocking {
+        val service = GroqRoleService()
         val dummyTasks = listOf(
             TaskEntity(id = 1, title = "Revisar correos urgentes", durationMinutes = 15, isFixed = false),
             TaskEntity(id = 2, title = "Sesión de estudio profunda", durationMinutes = 90, isFixed = false),
@@ -63,5 +65,6 @@ class GeminiNotificationVerificationTest {
         val rankedIds = service.rankTasksPriority(dummyTasks)
         assertNotNull(rankedIds)
         assertEquals(3, rankedIds.size)
+        println("Ranking de Groq: $rankedIds")
     }
 }
